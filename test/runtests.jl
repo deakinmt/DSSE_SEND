@@ -1,6 +1,6 @@
-using DSSE-SEND
+using DSSE_SEND
 using Test
 
-@testset "DSSE-SEND.jl" begin
+@testset "DSSE_SEND.jl" begin
     # Write your tests here.
 end
