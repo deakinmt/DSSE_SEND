@@ -3,6 +3,11 @@ uuid = "f0f1bc1f-8013-4726-89d9-13db6752d42d"
 authors = ["MartaVanin <marta.vanin@esat.kuleuven.be> and contributors"]
 version = "0.1.0"
 
+[deps]
+PowerModelsAnalytics = "7425d11c-6b70-11e9-2bc6-9bcd3191d4b9"
+PowerModelsDistribution = "d7431456-977f-11e9-2de3-97ff7677985e"
+PowerModelsDistributionStateEstimation = "d0713e65-ce0c-4a8e-a1da-2ed737d217c5"
+
 [compat]
 julia = "1"
 
