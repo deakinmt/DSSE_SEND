@@ -1,4 +1,4 @@
-name = "DSSE-SEND"
+name = "DSSE_SEND"
 uuid = "f0f1bc1f-8013-4726-89d9-13db6752d42d"
 authors = ["MartaVanin <marta.vanin@esat.kuleuven.be> and contributors"]
 version = "0.1.0"
