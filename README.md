@@ -11,4 +11,10 @@ They come from a dependency of PowerModelsDistributionStateEstimation, their eli
 - I had to comment out line 31 of master.dss, there is a problem reading the buscoords. I guess it does not matter too much at this point (I plot the networks with PowerModelsAnalytics.plot_network, that kdoesn't need buscoords)
 - I had to modify the `xfmrs.dss` file. The original is now kept as `xfmrs_original.dss`. The thing is basically that the parser didn't like the "bus2=" in the bus definition
 
+## Streamlined graph of the network:
 
+Buses with a `~` on are generators, green buses are loads, `V` is the voltage source. 
+Bus names are visible.
+Transformers are not explicitly displayed.
+
+![alt text](send_ntw.png "Send")
