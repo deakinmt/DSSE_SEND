@@ -4,9 +4,14 @@ authors = ["MartaVanin <marta.vanin@esat.kuleuven.be> and contributors"]
 version = "0.1.0"
 
 [deps]
+CSV = "336ed68f-0bac-5ca0-87d4-7b16caf5d00b"
+DataFrames = "a93c6f00-e57d-5684-b7b6-d8193f3e46c0"
+Dates = "ade2ca70-3891-5945-98fb-dc099432e06a"
+Distributions = "31c24e10-a181-5473-b8eb-7969acd0382f"
 PowerModelsAnalytics = "7425d11c-6b70-11e9-2bc6-9bcd3191d4b9"
 PowerModelsDistribution = "d7431456-977f-11e9-2de3-97ff7677985e"
 PowerModelsDistributionStateEstimation = "d0713e65-ce0c-4a8e-a1da-2ed737d217c5"
+Statistics = "10745b16-79ce-11e8-11f9-7d13ad32a3b2"
 
 [compat]
 julia = "1"
