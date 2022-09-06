@@ -8,6 +8,9 @@ _DS.adjust_some_meas_location!(ntw_eng) # some generators/loads are connected to
 
 _DS.quickplot_send_network(ntw_eng) # quickly plots the network
 
+_DS.add_loads_for_measured_ss!(ntw_eng)
+_DS.delete_transfo_where_no_meas!(ntw_eng)
+
 math = _PMD.transform_data_model(ntw_eng)
 _DS.quickplot_send_network(math) # quickly plots the network
 

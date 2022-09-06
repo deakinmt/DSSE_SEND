@@ -64,7 +64,9 @@ function adjust_load_gen_names!(math::Dict)
     end
 end
 """
-the one below does not remove the voltage source though, not sure how to do that.
+Removes the transformers loads/gens that are connected to the LV but measured on the MV side.
+It keeps the loads/gens, but puts them on the MV bus where the measurement belongs.
+This function does not remove the voltage source though, see `rm_voltage_source!`
 """
 function adjust_some_meas_location!(data::Dict)
     data["generator"]["wind1"]["bus"] = "tx3"
@@ -80,7 +82,10 @@ function adjust_some_meas_location!(data::Dict)
     delete!(data["transformer"], "xfmr_1")
     delete!(data["bus"], "rmu2_lv")
 end
-
+"""
+Removes the voltage source transfo and just treats the connection at the HV/LV transfo as a 
+slackbus. Data must be in the MATHEMATICAL form.
+"""
 function rm_voltage_source!(data::Dict)
     data["gen"]["6"]["vbase"] = data["bus"]["34"]["vbase"]
     data["gen"]["6"]["gen_bus"] = 34
@@ -94,4 +99,85 @@ function rm_voltage_source!(data::Dict)
     for (t, trnsfo) in data["transformer"]
         if occursin("sourcexfmr", trnsfo["name"]) delete!(data["transformer"], t) end
     end
+end
+"""
+Some substations are measured (they are in the csv files) but there is no load associated to them.
+This function defines loads and transfos, so we can use those measurements!
+    Some of these are on the MV, some on the LV
+"""
+function add_loads_for_measured_ss!(data::Dict)
+    data["load"]["ss12"] = deepcopy(data["load"]["ss16"])
+    data["load"]["ss12"]["source_id"] = "load.ss12"
+    data["load"]["ss12"]["bus"] = "ss12"
+
+    data["load"]["ss11"] = deepcopy(data["load"]["ss16"])
+    data["load"]["ss11"]["source_id"] = "load.ss11"
+    data["load"]["ss11"]["bus"] = "ss11_lv"
+    data["bus"]["ss11_lv"] = deepcopy(data["bus"]["tx4_lv"])
+    data["transformer"]["xfmr_nu1"] = deepcopy(data["transformer"]["xfmr_5"])
+    data["transformer"]["xfmr_nu1"]["source_id"] = "xfmr_nu1"
+    data["transformer"]["xfmr_nu1"]["bus"] = ["ss11", "ss11_lv"]
+
+    data["load"]["ss25"] = deepcopy(data["load"]["ss16"])
+    data["load"]["ss25"]["source_id"] = "load.ss25"
+    data["load"]["ss25"]["bus"] = "ss25_lv"
+    data["bus"]["ss25_lv"] = deepcopy(data["bus"]["tx4_lv"])
+    data["transformer"]["xfmr_nu2"] = deepcopy(data["transformer"]["xfmr_5"])
+    data["transformer"]["xfmr_nu2"]["source_id"] = "xfmr_nu2"
+    data["transformer"]["xfmr_nu2"]["bus"] = ["ss25", "ss25_lv"]
+    # I WOULD LIKE TO ADD SS29 BUT IT DOES NOT EVEN EXIST AS A BUS, SO DUNNO WHERE IT IS LOCATED
+    # data["load"]["ss29"] = deepcopy(data["load"]["ss16"])
+    # data["load"]["ss29"]["source_id"] = "load.ss29"
+    # data["load"]["ss29"]["bus"] = "ss29_lv"
+    # data["bus"]["ss29_lv"] = deepcopy(data["bus"]["tx4_lv"])
+    # data["transformer"]["xfmr_nu3"] = deepcopy(data["transformer"]["xfmr_5"])
+    # data["transformer"]["xfmr_nu3"]["source_id"] = "xfmr_nu3"
+    # data["transformer"]["xfmr_nu3"]["bus"] = ["ss29", "ss29_lv"]
+end
+"""
+Deletes the transfo and LV bus for those loads that are not measured.
+    The load is moved to the MV side.
+    This reduces the complexity because fewer transfos = fewer constraints!
+"""
+function delete_transfo_where_no_meas!(data::Dict)
+    delete!(data["bus"], "ss08_lv")
+    delete!(data["transformer"], "xfmr_13")
+    data["load"]["ss08"]["bus"] = "ss08"
+
+    delete!(data["bus"], "t08_lv")
+    delete!(data["transformer"], "xfmr_12")
+    data["load"]["t08"]["bus"] = "t08"
+
+    delete!(data["bus"], "ss06_lv")
+    delete!(data["transformer"], "xfmr_10")
+    data["load"]["ss06"]["bus"] = "ss06"
+
+    delete!(data["bus"], "t07_lv")
+    delete!(data["transformer"], "xfmr_11")
+    data["load"]["t07"]["bus"] = "t07"
+
+    delete!(data["bus"], "ss22_lv")
+    delete!(data["transformer"], "xfmr_20")
+    data["load"]["ss22"]["bus"] = "ss22"
+
+    delete!(data["bus"], "ss23_lv")
+    delete!(data["transformer"], "xfmr_21")
+    data["load"]["ss23"]["bus"] = "ss23"
+
+    delete!(data["bus"], "tx4_lv")
+    delete!(data["transformer"], "xfmr_3")
+    data["generator"]["wind2"]["bus"] = "tx4"
+
+    delete!(data["bus"], "rmu1_lv")
+    delete!(data["transformer"], "xfmr_0")
+    data["generator"]["solar2"]["bus"] = "rmu1"
+end
+"""
+Adds a load to the ss... buses that have no load/gen connected (both injection and demand allowed)
+
+"""
+function add_loads_where_not_specified!(data::Dict)
+
+27, 28, 26
+
 end
