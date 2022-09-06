@@ -80,7 +80,7 @@ function add_measurement!(data::Dict, d::Dict, meas::DataFrames.DataFrame, m::In
             end
         end
         dst = build_dst(meas, data, d, var) 
-        data["meas"]["$m"] = Dict("var"=>var, "cmp"=> cmp, "cmp_id"=>cmp_id, "dst"=>dst)
+        data["meas"]["$m"] = Dict("var"=>var, "cmp"=> cmp, "cmp_id"=>cmp_id, "dst"=>dst, "name"=>meas.Id)
     end
 end
 
@@ -95,7 +95,6 @@ function build_dst(meas::DataFrames.DataFrame, data::Dict, d::Dict, var::Symbol)
     else
         @error "Measurement $var not recognized for $(meas.Id[1])"
     end
-    display("I did meas Id: $(meas.Id)")
     return [_DST.Normal(m1, σ), _DST.Normal(m2, σ), _DST.Normal(m3, σ)]
 end
 
@@ -119,13 +118,14 @@ function add_ss13_2_meas!(timestep::Dates.DateTime, data::Dict, aggregation::Dat
     end
 
     meas = filter(x->x.Id .== "ss13_2", ts_df)
-    @assert data["bus"]["35"]["name"] == "ss13a" "Bus 35 has a different name; probably measurement ss13_2 is now somewhere else"
+    @assert data["bus"]["30"]["name"] == "ss13a" "Bus 30 has a different name; probably measurement ss13_2 is now somewhere else"
 
-    m1, m2, m3 = (meas.v1[1], meas.v2[1], meas.v3[1])./(sqrt(3)*data["bus"]["35"]["vbase"]*1000)
+    m1, m2, m3 = (meas.v1[1], meas.v2[1], meas.v3[1])./(sqrt(3)*data["bus"]["30"]["vbase"]*1000)
     σ = abs(0.002/3*Statistics.mean([m1, m2, m3]))
 
-    data["meas"]["$(m+1)"] = Dict("var"=>:vm, "cmp" => :bus, "cmp_id"=>35, 
-                        "dst" => [_DST.Normal(m1, σ), _DST.Normal(m2, σ), _DST.Normal(m3, σ)]
+    data["meas"]["$(m+1)"] = Dict("var"=>:vm, "cmp" => :bus, "cmp_id"=>30, 
+                        "dst" => [_DST.Normal(m1, σ), _DST.Normal(m2, σ), _DST.Normal(m3, σ)],
+                        "name" => "ss13_2"
                         )
     nothing
 end

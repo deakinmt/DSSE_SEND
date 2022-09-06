@@ -181,3 +181,5 @@ function add_loads_where_not_specified!(data::Dict)
 27, 28, 26
 
 end
+
+dss2dsse_proper = adjust_load_gen_names! ∘ adjust_gen_data! ∘ rm_voltage_source! ∘ _PMD.transform_data_model ∘ delete_transfo_where_no_meas! ∘ add_loads_for_measured_ss! ∘ adjust_some_meas_location! 
