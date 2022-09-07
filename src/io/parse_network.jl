@@ -125,7 +125,7 @@ function add_loads_for_measured_ss!(data::Dict)
     data["transformer"]["xfmr_nu2"] = deepcopy(data["transformer"]["xfmr_5"])
     data["transformer"]["xfmr_nu2"]["source_id"] = "xfmr_nu2"
     data["transformer"]["xfmr_nu2"]["bus"] = ["ss25", "ss25_lv"]
-    # I WOULD LIKE TO ADD SS29 BUT IT DOES NOT EVEN EXIST AS A BUS, SO DUNNO WHERE IT IS LOCATED
+    # I WOULD LIKE TO ADD SS29 BUT IT DOES NOT EVEN EXIST AS A BUS, SO dontknow WHERE IT IS LOCATED
     # data["load"]["ss29"] = deepcopy(data["load"]["ss16"])
     # data["load"]["ss29"]["source_id"] = "load.ss29"
     # data["load"]["ss29"]["bus"] = "ss29_lv"
@@ -182,4 +182,13 @@ function add_loads_where_not_specified!(data::Dict)
 
 end
 
-dss2dsse_proper = adjust_load_gen_names! ∘ adjust_gen_data! ∘ rm_voltage_source! ∘ _PMD.transform_data_model ∘ delete_transfo_where_no_meas! ∘ add_loads_for_measured_ss! ∘ adjust_some_meas_location! 
+function dss2dsse_data_pipeline(ntw_eng::Dict)::Dict   
+    adjust_some_meas_location!(ntw_eng) # some generators/loads are connected to the lv side in the dictionary, but the measurement is on the MV side! this fixes this discrepancy and removes the transfo
+    add_loads_for_measured_ss!(ntw_eng)
+    delete_transfo_where_no_meas!(ntw_eng)
+    math = _PMD.transform_data_model(ntw_eng)
+    rm_voltage_source!(math)  
+    adjust_gen_data!(math) # makes it such that the generators are not assigned to frequencydroop control and PV buses
+    adjust_load_gen_names!(math) #adjusts the names of the gens in the math Dict to make them match the big measurements csv file
+    return math
+end
