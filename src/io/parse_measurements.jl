@@ -91,7 +91,7 @@ function build_dst(meas::DataFrames.DataFrame, data::Dict, d::Dict, var::Symbol)
         σ = abs(0.002/3*Statistics.mean([m1, m2, m3])) #voltage tolerances are ±0.2%
     elseif var ∈ [:pd, :qd, :pg, :qg]
         m1, m2, m3 = p_perunit(meas[Symbol(String(var)[1])][1], meas.v1[1], meas.v2[1], meas.v3[1], meas.i1[1], meas.i2[1], meas.i3[1])
-        σ = abs(0.005/3*Statistics.mean([m1, m2, m3]))
+        σ = maximum([abs(0.005/3*Statistics.mean([m1, m2, m3])), 1e-7])
     else
         @error "Measurement $var not recognized for $(meas.Id[1])"
     end
@@ -118,12 +118,12 @@ function add_ss13_2_meas!(timestep::Dates.DateTime, data::Dict, aggregation::Dat
     end
 
     meas = filter(x->x.Id .== "ss13_2", ts_df)
-    @assert data["bus"]["30"]["name"] == "ss13a" "Bus 30 has a different name; probably measurement ss13_2 is now somewhere else"
+    bus_id = [b for (b,bus) in data["bus"] if bus["name"] == "ss13a"][1]
 
-    m1, m2, m3 = (meas.v1[1], meas.v2[1], meas.v3[1])./(sqrt(3)*data["bus"]["30"]["vbase"]*1000)
+    m1, m2, m3 = (meas.v1[1], meas.v2[1], meas.v3[1])./(sqrt(3)*data["bus"][bus_id]["vbase"]*1000)
     σ = abs(0.002/3*Statistics.mean([m1, m2, m3]))
 
-    data["meas"]["$(m+1)"] = Dict("var"=>:vm, "cmp" => :bus, "cmp_id"=>30, 
+    data["meas"]["$(m+1)"] = Dict("var"=>:vm, "cmp" => :bus, "cmp_id"=>parse(Int, bus_id), 
                         "dst" => [_DST.Normal(m1, σ), _DST.Normal(m2, σ), _DST.Normal(m3, σ)],
                         "name" => "ss13_2"
                         )

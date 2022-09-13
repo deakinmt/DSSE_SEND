@@ -12,6 +12,7 @@ PowerModelsAnalytics = "7425d11c-6b70-11e9-2bc6-9bcd3191d4b9"
 PowerModelsDistribution = "d7431456-977f-11e9-2de3-97ff7677985e"
 PowerModelsDistributionStateEstimation = "d0713e65-ce0c-4a8e-a1da-2ed737d217c5"
 Statistics = "10745b16-79ce-11e8-11f9-7d13ad32a3b2"
+StatsPlots = "f3b207a7-027a-5e70-b257-86293d7955fd"
 
 [compat]
 julia = "1"

@@ -20,6 +20,11 @@ Accesses the send network's dss files and parses them to a PowerModelsDistributi
 parse_send_ntw_math()::Dict = 
  _PMD.parse_file(joinpath(_DS.BASE_DIR, "matts_files/send_network_220812/master.dss"), data_model=_PMD.MATHEMATICAL)
 """
+new files
+"""
+parse_send_new_ntw_eng()::Dict =
+ _PMD.parse_file(joinpath(_DS.BASE_DIR, "matts_files/send_network_220912/send_network/master_dsse.dss"), data_model=_PMD.ENGINEERING)
+"""
 Generators seem to be parsed from .dss to PV buses and FREQUENCYDROOP control model in MATHEMATICAL model.
 This reverts them to PQ buses and sets ISOCHRONOUS control.
 Should be equivalent to a negative load. --> to verify
@@ -31,8 +36,14 @@ function adjust_gen_data!(math::Dict)
         if bus["index"] ∈ gen_buses bus["bus_type"] = 1 end
     end
     for (_, gen) in math["gen"]
-        if !occursin("voltage_source", gen["name"])
+        if !occursin("voltage_source", gen["source_id"])
             gen["control_mode"] = _PMD.ISOCHRONOUS
+        else
+            gen["name"] = "ss13_1" # TO CHECK HOW TO HANDLE THIS???
+            math["bus"]["$(gen["gen_bus"])"]["bus_type"] = 3
+            math["bus"]["$(gen["gen_bus"])"]["vmin"] = [0.0, 0.0, 0.0]
+            math["bus"]["$(gen["gen_bus"])"]["vmax"] = [2.0, 2.0, 2.0]
+            delete!(math["bus"]["$(gen["gen_bus"])"], "vm")
         end
     end
 end
@@ -51,8 +62,12 @@ function adjust_load_gen_names!(math::Dict)
             gen["name"] = "solar"
         elseif gen["name"] == "bess"
             gen["name"] = "storage"
-        elseif gen["name"] == "_virtual_gen.voltage_source.source"
+        elseif gen["name"] == "_virtual_bus.voltage_source.source" || gen["name"] == "_virtual_gen.voltage_source.source" 
             gen["name"] = "ss13_1" # TO CHECK HOW TO HANDLE THIS???
+            math["bus"]["$(gen["gen_bus"])"]["bus_type"] = 3
+            math["bus"]["$(gen["gen_bus"])"]["vmin"] = [0.0, 0.0, 0.0]
+            math["bus"]["$(gen["gen_bus"])"]["vmax"] = [2.0, 2.0, 2.0]
+            delete!(math["bus"]["$(gen["gen_bus"])"], "vm")
         end
     end
     for (l,load) in math["load"]
@@ -172,23 +187,34 @@ function delete_transfo_where_no_meas!(data::Dict)
     delete!(data["transformer"], "xfmr_0")
     data["generator"]["solar2"]["bus"] = "rmu1"
 end
-"""
-Adds a load to the ss... buses that have no load/gen connected (both injection and demand allowed)
-
-"""
-function add_loads_where_not_specified!(data::Dict)
-
-27, 28, 26
-
-end
 
 function dss2dsse_data_pipeline(ntw_eng::Dict)::Dict   
     adjust_some_meas_location!(ntw_eng) # some generators/loads are connected to the lv side in the dictionary, but the measurement is on the MV side! this fixes this discrepancy and removes the transfo
     add_loads_for_measured_ss!(ntw_eng)
     delete_transfo_where_no_meas!(ntw_eng)
     math = _PMD.transform_data_model(ntw_eng)
-    rm_voltage_source!(math)  
+    #rm_voltage_source!(math)  
     adjust_gen_data!(math) # makes it such that the generators are not assigned to frequencydroop control and PV buses
     adjust_load_gen_names!(math) #adjusts the names of the gens in the math Dict to make them match the big measurements csv file
     return math
+end
+"""
+to be used with the new master_dsse.dss from september 2022
+"""
+function new_dss2dsse_data_pipeline(ntw_eng::Dict)::Dict   
+    math = _PMD.transform_data_model(ntw_eng)
+    adjust_gen_data!(math) 
+    return math
+end
+"""
+As of Sept. 2022, that ss17 substation has really bad measurements, that cause high residuals 
+both there and elsewhere. This gets rid of those measurements
+"""
+function delete_ss17_meas!(math::Dict)
+    ss17_bus = [load["load_bus"] for (l,load) in math["load"] if load["name"] == "ss17"][1]
+    for (m,meas) in math["meas"]
+        if (meas["var"] == :vm && meas["cmp_id"] == ss17_bus) || (meas["cmp"] == :load && meas["name"][1] == "ss17")
+            delete!(math["meas"], m)
+        end
+    end
 end

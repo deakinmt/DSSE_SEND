@@ -12,7 +12,9 @@ function plot_powers(choose_id::String, timerange::StepRange{Dates.DateTime, T};
     if savefig StatsPlots.savefig(plt, choose_id*"_power.png") end
     return plt 
 end
-
+"""
+returns them in volts
+"""
 function get_voltage_residuals_onets(data::Dict, sol::Dict)
     ρ = Dict{String, Any}()
     for (m,meas) in data["meas"]
@@ -30,7 +32,7 @@ function plot_voltage_residuals_onets(ρ::Dict; data::Dict=Dict{String, Any}())
     if !isempty(data)
 
     else
-        ylabel = "Voltage residuals [p.u.]"
+        ylabel = "Voltage residuals [V]"
     end
     StatsPlots.scatter(collect(keys(ρ)), [x[1] for x in collect(values(ρ))], label="Phase a", markershape=:circle)
     StatsPlots.scatter!(collect(keys(ρ)), [x[2] for x in collect(values(ρ))], label="Phase b", markershape=:diamond)

@@ -1,5 +1,5 @@
 plot_send_network(ntw::Dict; kwargs...) = plot_network(ntw; kwargs...)
-
+## add docs!
 function quickplot_send_network(ntw::Dict; savefig::Bool=false, figname::String="send_ntw.png")
     
     if !savefig
