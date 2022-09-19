@@ -129,3 +129,16 @@ function add_ss13_2_meas!(timestep::Dates.DateTime, data::Dict, aggregation::Dat
                         )
     nothing
 end
+
+function hack_ss19!(data)
+    for (_,meas) in data["meas"]
+        if meas["name"][1] == "ss19" && meas["var"] == :vm
+            v1, v2, v3 = _DST.mean.(meas["dst"])
+            if isapprox(v1, 1.05008, atol = 0.0001)
+                σ = _DST.std(meas["dst"][2])
+                v1 = Statistics.mean([v2, v3])
+                meas["dst"][1] = _DST.Normal(v1,σ*2)
+            end
+        end
+    end
+end
