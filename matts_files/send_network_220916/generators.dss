@@ -1,0 +1,5 @@
+new generator.solar1 phases=3 bus1=rmu2_lv kv=0.6 kW=2750 pf=1.0 vminpu=0.1 vmaxpu=10.0
+new generator.solar2 phases=3 bus1=rmu1_lv kv=0.6 kW=2750 pf=1.0 vminpu=0.1 vmaxpu=10.0
+new generator.wind1 phases=3 bus1=tx3_lv kv=0.69 kW=1100 pf=1.0 vminpu=0.1 vmaxpu=10.0
+new generator.wind2 phases=3 bus1=tx4_lv kv=0.69 kW=950 pf=1.0 vminpu=0.1 vmaxpu=10.0
+new generator.bess phases=3 bus1=tx5_lv kv=0.405 kW=1000 pf=1.0 vminpu=0.1 vmaxpu=10.0
