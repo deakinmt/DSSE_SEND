@@ -1,5 +1,5 @@
 """
-Plots power of a certain load/generator
+Plots power of a certain load/generator from csv file of measurements
 """
 function plot_powers(choose_id::String, timerange::StepRange{Dates.DateTime, T}; savefig::Bool=false, file::String=joinpath(_DS.BASE_DIR, "matts_files/all_measurements.csv")) where T <: Dates.TimePeriod
     df = CSV.read(file)
@@ -13,64 +13,86 @@ function plot_powers(choose_id::String, timerange::StepRange{Dates.DateTime, T};
     return plt 
 end
 """
-returns them in volts
+if in_volts is true, then it returns them in volts
+              false, then it returns them in per units
 """
-function get_voltage_residuals_onets(data::Dict, sol::Dict)
+function get_voltage_residuals_one_ts(data::Dict, sol::Dict; in_volts::Bool=true)
     ρ = Dict{String, Any}()
     for (m,meas) in data["meas"]
         if meas["var"] == :vm
             vm_se   = sol["solution"]["bus"]["$(meas["cmp_id"])"]["vm"]
             vm_meas = _DST.mean.(meas["dst"])
             id = meas["name"] isa Vector ? meas["name"][1] : meas["name"]
-            ρ["$id"] = (vm_se-vm_meas)*data["bus"]["$(meas["cmp_id"])"]["vbase"]*1000*sqrt(3)
+            ρ["$id"] = in_volts ? (vm_se-vm_meas)*data["bus"]["$(meas["cmp_id"])"]["vbase"]*1000*sqrt(3) : vm_se-vm_meas
         end
     end
     return ρ
 end
+"""
+if in_volts is true, then it plots them in volts
+              false, then it plots them in per units
+"""
+function plot_voltage_residuals_one_ts(ρ::Dict; in_volts::Bool=true, title::String="")
 
-function plot_voltage_residuals_onets(ρ::Dict; data::Dict=Dict{String, Any}())
-    if !isempty(data)
+    ylabel = in_volts ? "Voltage residuals [V]" : "Voltage residuals [p.u.]" 
 
-    else
-        ylabel = "Voltage residuals [V]"
-    end
     StatsPlots.scatter(collect(keys(ρ)), [x[1] for x in collect(values(ρ))], label="Phase a", markershape=:circle)
     StatsPlots.scatter!(collect(keys(ρ)), [x[2] for x in collect(values(ρ))], label="Phase b", markershape=:diamond)
     StatsPlots.scatter!(collect(keys(ρ)), [x[3] for x in collect(values(ρ))], label="Phase c",markershape=:cross,
-                        ylabel = ylabel,
+                        ylabel = ylabel, title = title,
                         xticks=(0.5:1:length(keys(ρ))-0.5, collect(keys(ρ))), xrotation=-45)
 end
 
-function plot_voltage_residuals_multits(ρ::Dict)
+function plot_voltage_residuals_multi_ts(ρ::Dict; in_volts::Bool=true, title::String="")
     colnames = vcat(:timestep, :id, :phase_a, :phase_b, :phase_c)
     df = DataFrames.DataFrame(repeat([[]], length(colnames)), colnames)
+    pu_or_v = in_volts ? "V" : "V_pu"
+    ylabel = in_volts ? "Voltage residuals [V]" : "Voltage residuals [p.u.]"
     for (ts, r) in ρ
-        for (name, resid) in r
+        for (name, resid) in r[pu_or_v]
             push!(df, [ts, name, resid[1], resid[2], resid[3]])
         end
     end
     x = collect(keys(ρ))[1]
-    StatsPlots.plot(ylabel="Voltage residuals [V]",xticks=(0.5:1:length(keys(ρ[x]))-0.5, collect(keys(ρ[x]))), xrotation=-45)
-    StatsPlots.@df df StatsPlots.boxplot!(:id, :phase_a)
-    StatsPlots.@df df StatsPlots.boxplot!(:id, :phase_b)
-    StatsPlots.@df df StatsPlots.boxplot!(:id, :phase_c)
+    p1 = StatsPlots.@df df StatsPlots.boxplot(:id, :phase_a, label="Phase a", legend=:topleft, ylabel=ylabel, xticks=(0.5:1:length(keys(ρ[x][pu_or_v]))-0.5, sort(unique(df.id))), xrotation=-45, title=title, titlefontsize=8)
+    p2 = StatsPlots.@df df StatsPlots.boxplot(:id, :phase_b, label="Phase b", legend=:topleft, ylabel=ylabel, xticks=(0.5:1:length(keys(ρ[x][pu_or_v]))-0.5, sort(unique(df.id))), xrotation=-45, title=title, titlefontsize=8)
+    p3 = StatsPlots.@df df StatsPlots.boxplot(:id, :phase_c, label="Phase c", legend=:topleft, ylabel=ylabel, xticks=(0.5:1:length(keys(ρ[x][pu_or_v]))-0.5, sort(unique(df.id))), xrotation=-45, title=title, titlefontsize=8)
+    return p1,p2,p3
 end
 
-function plot_voltage_residuals_multits2(ρ::Dict)
-    colnames = vcat(:timestep, :id, :phase_a, :phase_b, :phase_c)
-    colnames = vcat(:timestep, :id, :phase, :res)
+function plot_power_residuals_multi_ts(ρ::Dict; per_phase::Bool = true, p_or_q::String="p", in_kw::Bool=true, title::String="")
+    colnames = per_phase ? vcat(:timestep, :id, :phase_a, :phase_b, :phase_c) : vcat(:timestep, :id, :power)
     df = DataFrames.DataFrame(repeat([[]], length(colnames)), colnames)
+    ylabel_qty = p_or_q == "p" ? "kW" : "kVAr"
+    ylabel = in_kw ? "$(uppercase(p_or_q)) residuals [$ylabel_qty]" : "$(uppercase(p_or_q)) residuals [p.u.]"
     for (ts, r) in ρ
-        for (name, resid) in r
-            for x in 1:3
-                push!(df, [ts, name, ["Phase A", "Phase B", "Phase C"][x], resid[x]])
+        for (name, qty) in r["power"]
+            for (q, qq) in qty
+                if occursin(p_or_q, q)
+                    k = in_kw ? "kW" : "abs"
+                    resid = qq[k]
+                    if per_phase
+                        push!(df, [ts, name, resid[1], resid[2], resid[3]])
+                    else
+                        push!(df, [ts, name, resid[1]+resid[2]+resid[3]])
+                    end
+                end
             end
         end
     end
-    StatsPlots.@df df boxplot(:id, :res, groupby=:phase)
+    x = collect(keys(ρ))[1]
+    if per_phase
+        p1 = StatsPlots.@df df StatsPlots.boxplot(:id, :phase_a, label="Phase a", legend=:topleft, ylabel=ylabel, xticks=(0.5:1:length(keys(ρ[x]["power"]))-0.5, sort(unique(df.id))), xrotation=-45, title=title)
+        p2 = StatsPlots.@df df StatsPlots.boxplot(:id, :phase_b, label="Phase b", legend=:topleft, ylabel=ylabel, xticks=(0.5:1:length(keys(ρ[x]["power"]))-0.5, sort(unique(df.id))), xrotation=-45, title=title)
+        p3 = StatsPlots.@df df StatsPlots.boxplot(:id, :phase_c, label="Phase c", legend=:topleft, ylabel=ylabel, xticks=(0.5:1:length(keys(ρ[x]["power"]))-0.5, sort(unique(df.id))), xrotation=-45, title=title)
+        return p1,p2,p3
+    else
+        p = StatsPlots.@df df StatsPlots.boxplot(:id, :power, label="Total 3P power", legend=:topleft, ylabel=ylabel, xticks=(0.5:1:length(keys(ρ[x]["power"]))-0.5, sort(unique(df.id))), xrotation=-45, title=title)
+        return p
+    end
 end
 
-function get_power_residuals_onets(data::Dict, sol::Dict)
+function get_power_residuals_one_ts(data::Dict, sol::Dict)
     ρ = Dict{String, Any}()
     for (m,meas) in data["meas"]
         if meas["var"] ∈ [:pd, :qd]
@@ -97,4 +119,11 @@ function get_power_residuals_onets(data::Dict, sol::Dict)
         end
     end
     return ρ
+end
+"""
+plots a time series from any results from the `run_dsse_multi_ts` function (except the diagnostic dictionary)
+"""
+function plot_timeseries(res::Dict, vals::Dict, what::String, choose_id, timerange)
+    @assert lowercase(what) ∈ ["p", "q", "v"] "please choose a `what` among p, q, or v. not $what"
+    
 end
