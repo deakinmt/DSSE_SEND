@@ -200,10 +200,29 @@ function dss2dsse_data_pipeline(ntw_eng::Dict)::Dict
 end
 """
 to be used with the new master_dsse.dss from september 2022
+This function 1) adjusts some tap settings
+              2) changes some generators settings, such that they just behave as negative loads and not as PV buses or weird stuff
+              3) allows generators to have negative injection (i.e., behave as loads).
+                 For instance, the storage does charge so that's needed.
 """
-function new_dss2dsse_data_pipeline(ntw_eng::Dict)::Dict   
+function new_dss2dsse_data_pipeline(ntw_eng::Dict)::Dict  
+    ntw_eng["transformer"]["xfmr_4"]["tm_set"] = [[1.0, 1.0, 1.0], [1.0625, 1.0625,1.0625]]
+    ntw_eng["transformer"]["xfmr_15"]["tm_set"] = [[1.0, 1.0, 1.0], [1.0625, 1.0625,1.0625]]
+    ntw_eng["transformer"]["xfmr_16"]["tm_set"] = [[1.0, 1.0, 1.0], [1.0625, 1.0625,1.0625]]
+    ntw_eng["transformer"]["xfmr_29"]["tm_set"] = [[1.0, 1.0, 1.0], [1.0625, 1.0625,1.0625]]
+    ntw_eng["transformer"]["xfmr_29"]["tm_set"] = [[1.0, 1.0, 1.0], [1.03125, 1.03125,1.03125]] #load ss29
+    
     math = _PMD.transform_data_model(ntw_eng)
     adjust_gen_data!(math) 
+
+    math["gen"]["2"]["pmin"] = [-0.1, -0.1, -0.1] # the storage can have negative power!
+    math["gen"]["3"]["pmin"] = [-0.1, -0.1, -0.1]
+    math["gen"]["1"]["pmin"] = [-0.1, -0.1, -0.1]
+    math["gen"]["4"]["pmin"] = [-0.1, -0.1, -0.1]
+    math["gen"]["2"]["qmin"] = [-0.1, -0.1, -0.1] # the storage can have negative power!
+    math["gen"]["3"]["qmin"] = [-0.1, -0.1, -0.1]
+    math["gen"]["1"]["qmin"] = [-0.1, -0.1, -0.1]
+    math["gen"]["4"]["qmin"] = [-0.1, -0.1, -0.1]
     return math
 end
 """
