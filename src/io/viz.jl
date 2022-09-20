@@ -28,6 +28,19 @@ function get_voltage_residuals_one_ts(data::Dict, sol::Dict; in_volts::Bool=true
     end
     return ρ
 end
+
+function get_voltage_measurement(data; in_volts::Bool=true)
+    ρ = Dict{String, Any}()
+    for (m,meas) in data["meas"]
+        if meas["var"] == :vm
+            vm_meas = _DST.mean.(meas["dst"])
+            id = meas["name"] isa Vector ? meas["name"][1] : meas["name"]
+            ρ["$id"] = in_volts ? vm_meas*data["bus"]["$(meas["cmp_id"])"]["vbase"]*1000*sqrt(3) : vm_meas
+        end
+    end
+    return ρ
+end
+
 """
 if in_volts is true, then it plots them in volts
               false, then it plots them in per units
@@ -123,7 +136,42 @@ end
 """
 plots a time series from any results from the `run_dsse_multi_ts` function (except the diagnostic dictionary)
 """
-function plot_timeseries(res::Dict, vals::Dict, what::String, choose_id, timerange)
+function plot_timeseries(res::Dict, vals::Dict, what::String, choose_id::String, timerange)
     @assert lowercase(what) ∈ ["p", "q", "v"] "please choose a `what` among p, q, or v. not $what"
-    
+    x = []
+    y_meas_ph1 = []
+    y_est_ph1 = []
+    y_meas_ph2 = []
+    y_est_ph2 = []
+    y_meas_ph3 = []
+    y_est_ph3 = []
+
+    for (t, ts) in res
+        if Dates.DateTime(t) ∈ timerange
+            if lowercase(what) ∈ ["p", "q"]
+                is_load = haskey(ts["power"][choose_id], "pd")
+                if is_load
+                    y_est = vals[t]["power_load"][choose_id][lowercase(what)*"d"] #variable value calculated by SE
+                    y_meas = y_est-ts["power"][choose_id][lowercase(what)*"d"]["abs"] #measurement = variable value-residual
+                else
+                    y_est = vals[t]["power_gen"][choose_id][lowercase(what)*"g"] #variable value calculated by SE
+                    y_meas = y_est-ts["power"][choose_id][lowercase(what)*"g"]["abs"] #measurement = variable value-residual
+                end
+            else
+                y_est = vals[t]["V_pu"][choose_id] #variable value calculated by SE
+                y_meas = y_est-ts["V_pu"][choose_id] #measurement = variable value-residual
+            end
+            push!(y_meas_ph1, y_meas[1])
+            push!(y_meas_ph2, y_meas[2])
+            push!(y_meas_ph3, y_meas[3])
+            push!(y_est_ph1, y_est[1])
+            push!(y_est_ph2, y_est[2])
+            push!(y_est_ph3, y_est[3])
+            push!(x, t[6:end])
+        end
+    end
+    p1 = StatsPlots.plot([x,x], [y_meas_ph1, y_est_ph1], labels=["Meas." "Est."], ylabel="$(uppercase(what)) - ph. 1 [p.u.]", xrotation=-45)
+    p2 = StatsPlots.plot([x,x], [y_meas_ph2, y_est_ph2], labels=["Meas." "Est."], ylabel="$(uppercase(what)) - ph. 2 [p.u.]", xrotation=-45)
+    p3 = StatsPlots.plot([x,x], [y_meas_ph3, y_est_ph3], labels=["Meas." "Est."], ylabel="$(uppercase(what)) - ph. 3 [p.u.]", xrotation=-45)
+    return p1, p2, p3
 end

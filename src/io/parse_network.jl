@@ -205,7 +205,7 @@ This function 1) adjusts some tap settings
               3) allows generators to have negative injection (i.e., behave as loads).
                  For instance, the storage does charge so that's needed.
 """
-function new_dss2dsse_data_pipeline(ntw_eng::Dict)::Dict  
+function new_dss2dsse_data_pipeline(ntw_eng::Dict; limit_demand::Bool=false, limit_bus::Bool=false)::Dict  
     ntw_eng["transformer"]["xfmr_4"]["tm_set"] = [[1.0, 1.0, 1.0], [1.0625, 1.0625,1.0625]]
     ntw_eng["transformer"]["xfmr_15"]["tm_set"] = [[1.0, 1.0, 1.0], [1.0625, 1.0625,1.0625]]
     ntw_eng["transformer"]["xfmr_16"]["tm_set"] = [[1.0, 1.0, 1.0], [1.0625, 1.0625,1.0625]]
@@ -215,14 +215,24 @@ function new_dss2dsse_data_pipeline(ntw_eng::Dict)::Dict
     math = _PMD.transform_data_model(ntw_eng)
     adjust_gen_data!(math) 
 
-    math["gen"]["2"]["pmin"] = [-0.1, -0.1, -0.1] # the storage can have negative power!
-    math["gen"]["3"]["pmin"] = [-0.1, -0.1, -0.1]
-    math["gen"]["1"]["pmin"] = [-0.1, -0.1, -0.1]
-    math["gen"]["4"]["pmin"] = [-0.1, -0.1, -0.1]
-    math["gen"]["2"]["qmin"] = [-0.1, -0.1, -0.1] # the storage can have negative power!
-    math["gen"]["3"]["qmin"] = [-0.1, -0.1, -0.1]
-    math["gen"]["1"]["qmin"] = [-0.1, -0.1, -0.1]
-    math["gen"]["4"]["qmin"] = [-0.1, -0.1, -0.1]
+    for (_,gen) in math["gen"]
+        gen["pmin"] = [-0.1, -0.1, -0.1] # the storage can have negative power!
+        gen["qmin"] = [-0.1, -0.1, -0.1]
+    end
+    if limit_demand
+        for (_,load) in math["load"] # to limit the power "guess" at non-monitored loads
+            load["pmin"] = [-1., -1., -1.] 
+            load["pmax"] = [1., 1., 1.]
+            load["qmin"] = [-1., -1., -1.] 
+            load["qmax"] = [1., 1., 1.]
+        end
+    end
+    if limit_bus
+        for (_,bus) in math["bus"] # to limit the power "guess" at non-monitored loads
+            bus["vmin"] = [0.5, 0.5, 0.5] 
+            bus["vmax"] = [1.5, 1.5, 1.5]
+        end
+    end
     return math
 end
 """

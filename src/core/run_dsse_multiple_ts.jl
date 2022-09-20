@@ -8,6 +8,10 @@ function run_dsse_multi_ts(math::Dict, timerange::StepRange{Dates.DateTime, T}, 
     for time_step in timerange
         ρ_ts[string(time_step)] = Dict{String, Any}()
         vals[string(time_step)] = Dict{String, Any}()
+        vals[string(time_step)]["V"] = Dict{String, Any}()
+        vals[string(time_step)]["V_pu"] = Dict{String, Any}()
+        vals[string(time_step)]["power_gen"] = Dict{String, Any}()
+        vals[string(time_step)]["power_load"] = Dict{String, Any}()
 
         add_measurements!(time_step, math, aggregation)
         add_ss13_2_meas!(time_step, math, aggregation)
@@ -21,10 +25,16 @@ function run_dsse_multi_ts(math::Dict, timerange::StepRange{Dates.DateTime, T}, 
         ρ_ts[string(time_step)]["V"] = get_voltage_residuals_one_ts(math, se_sol)
         ρ_ts[string(time_step)]["V_pu"] = get_voltage_residuals_one_ts(math, se_sol, in_volts=false)
         ρ_ts[string(time_step)]["power"] = get_power_residuals_one_ts(math, se_sol)
-        vals[string(time_step)]["V"] = [bus["vm"]*math["bus"][b]["vbase"]*1000*sqrt(3) for (b, bus) in se_sol["solution"]["bus"]]
-        vals[string(time_step)]["V_pu"] = [bus["vm"] for (_, bus) in se_sol["solution"]["bus"]]
-        vals[string(time_step)]["power_load"] = se_sol["solution"]["load"]
-        vals[string(time_step)]["power_gen"] = se_sol["solution"]["gen"]
+        vals[string(time_step)]["V"] = get_voltage_measurement(math)
+        vals[string(time_step)]["V_pu"] = get_voltage_measurement(math, in_volts=false)
+
+        for (g, gen) in se_sol["solution"]["gen"]
+            vals[string(time_step)]["power_gen"][math["gen"][g]["name"]] = gen
+        end
+        for (l, load) in se_sol["solution"]["load"]
+            vals[string(time_step)]["power_load"][math["load"][l]["name"]] = load
+        end
+
         diagnose_se[string(time_step)] = Dict("solve_time" => se_sol["solve_time"], 
                                         "termination_status"=>se_sol["termination_status"], "objective"=>se_sol["objective"], 
                                         "resc"=>rescaler, "crit"=>criterion, "aggr" => aggregation)

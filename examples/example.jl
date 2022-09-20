@@ -7,7 +7,7 @@ import CSV, DataFrames, Dates
 ntw_eng = _DS.parse_send_new_ntw_eng() 
 # alternatively, call parse_send_ntw_eng(pth::String) where pth is the path to master.dss
 
-math = _DS.new_dss2dsse_data_pipeline(ntw_eng)
+math = _DS.new_dss2dsse_data_pipeline(ntw_eng; limit_demand=false, limit_bus=true)
 
 # set time range and aggregation for the state estimation calculations
 # a state estimation is run every `time_step_step` timestamps starting from
@@ -77,6 +77,6 @@ pltz_p = _DS.plot_power_residuals_multi_ts(res, p_or_q="p", in_kw=true, per_phas
 # sorry I don't have one equivalent for the power. but also not sure it's useful
 p_v = _DS.plot_voltage_residuals_one_ts(res_v["2022-08-12T00:30:30"]["V"])
 
-# and you can plot timeseries for a chosen substation and quantity
-
-# ADD TIMESERIES!
+# and you can plot timeseries for a chosen substation and quantity among "v", "p", and "q"
+# again you get three plots, one per phase
+p = _DS.plot_timeseries(res, vals, "v", "ss19", time_step_begin:time_step_step:time_step_end)
