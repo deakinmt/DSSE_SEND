@@ -24,7 +24,7 @@ Buses with a `~` on are generators, green buses are loads, `V` is the voltage so
 Bus names are visible.
 Transformers are not explicitly displayed.
 
-![alt text](./fig_archive/readme/send_ntwk.png "Send")
+![alt text](./fig_archive/readme/send_ntw.png "Send")
 
 ## Attribution
 A full paper describing this work is in preparation and is expected to be submitted Q1 2023. In the meantime please reference this package as
