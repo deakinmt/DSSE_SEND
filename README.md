@@ -30,10 +30,15 @@ Transformers are not explicitly displayed.
 A full paper describing this work is in preparation and is expected to be submitted Q1 2023. In the meantime please reference this package as
 
 @Misc{deakin2022smart,
+
 author = {Deakin, Matthew and Vanin, Marta and Fan, Zhong and Dean, Ashley and Dean, Matthew and Shaw, Ian},
+
 title = {A Smart Energy Network Digital Twin with Distribution System State Estimation},
+
 howpublished = {\url{https://github.com/MartaVanin/DSSE_SEND}},
+
 year = {2022}
+
 }
 
 ## About the Smart Energy Network Demonstrator at Keele University
