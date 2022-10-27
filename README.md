@@ -24,13 +24,13 @@ Buses with a `~` on are generators, green buses are loads, `V` is the voltage so
 Bus names are visible.
 Transformers are not explicitly displayed.
 
-![alt text](./fig_archive/readme/send_ntw.png "Send")
+![alt text](./fig_archive/readme/send_ntw_background.png "Send")
 
 ## Attribution
 A full paper describing this work is in preparation and is expected to be submitted Q1 2023. In the meantime please reference this package as
 
 @Misc{deakin2022smart, <br />
-author = {Deakin, Matthew and Vanin, Marta and Fan, Zhong and Dean, Ashley and Dean, Matthew and Shaw, Ian}, <br />
+author = {Deakin, Matthew and Vanin, Marta and Fan, Zhong and Dean, Ashley and Dean, Matthew and Shaw, Ian and van Hertem, Dirk}, <br />
 title = {A Smart Energy Network Digital Twin with Distribution System State Estimation}, <br />
 howpublished = {\url{https://github.com/MartaVanin/DSSE_SEND}}, <br />
 year = {2022} <br />
