@@ -9,7 +9,7 @@ The package has four components.
 - Algorithms for combining telemetry and network model using state estimation.
 - Visualization of raw telemetry and state estimation outputs.
 
-This project is a collaboration between Newcastle University, Keele University, and KU Leuven.
+This project is a collaboration between Newcastle University, Keele University, and KU Leuven (ESAT/Electa).
 
 Keywords: Digital Twins; Unbalanced Distribution System State Estimation; Power Distribution; Smart Grids.
 
