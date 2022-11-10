@@ -56,8 +56,6 @@ The development of the Digital Twin was supported by the Centre for Postdoctoral
 
 The Smart Energy Network Demonstrator project (ref: 32R16P00706) is part-funded through the European Regional Development Fund (ERDF) as part of the England 2014 to 2020 European Structural and Investment Funds (ESIF) Growth Programme. It is also receiving funds from the Department for Business, Energy and Industrial Strategy (BEIS).
 
-to add - Marta's funding?
-
 ![alt text](./fig_archive/readme/ERDF_BEIS_Logos.png "BEIS")
 ![alt text](./fig_archive/readme/CDICE_RGB_logo.png "CDICE")
 ![alt text](./fig_archive/readme/Newcastle-logo.jpg "Newcastle")
