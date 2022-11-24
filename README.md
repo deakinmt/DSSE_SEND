@@ -9,6 +9,8 @@ The package has four components.
 - Algorithms for combining telemetry and network model using state estimation.
 - Visualization of raw telemetry and state estimation outputs.
 
+The raw source for the network model and telemetry dataset are available from M. Deakin et al, "A Smart Energy Network Digital Twin", available under a CC BY-4.0 licence (DOI: 10.25405/data.ncl.c.6315864).
+
 This project is a collaboration between Newcastle University, Keele University, and KU Leuven (ESAT/Electa).
 
 Keywords: Digital Twins; Unbalanced Distribution System State Estimation; Power Distribution; Smart Grids.
