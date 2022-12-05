@@ -1,0 +1,6 @@
+w.r.t. previous data:
+- "xfmr_29" not found. current workaround: comment line 212-213 of parse_network.jl
+
+TODO?
+- find a better name/data picker now that we have multiple days to choose from?
+- fix isnan(\sigma) in build_dst and also isnan(m1,m2,m3...) where do these NaNs come from? they look like zeros
