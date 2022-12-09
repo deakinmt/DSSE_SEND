@@ -18,8 +18,11 @@ math = _DS.new_dss2dsse_data_pipeline(ntw_eng; limit_demand=false, limit_bus=tru
 # sync between different measurements. If aggregation is 30", then the inst. 
 # values are taken instead (i.e., nothing is really aggregated).
 # aggregation and time_step_step don't have to be equal
-time_step_begin = Dates.DateTime(2022, 08, 12, 00, 14, 30)
-time_step_end = time_step_begin+Dates.Minute(20)
+
+chosen_day = Dates.Date(2022, 05, 13)#NB: this should match the time_steps below!
+
+time_step_begin = Dates.DateTime(2022, 05, 13, 00, 14, 30)
+time_step_end = time_step_begin+Dates.Minute(2)
 time_step_step = Dates.Minute(2)
 aggregation = time_step_step
 
@@ -28,8 +31,9 @@ plots_v = [] # initialize plots in volts array
 
 for ts in time_step_begin:time_step_step:time_step_end
 
-    _DS.add_measurements!(ts, math, aggregation) # adds P,Q,|U| measurements for all gens/loads that have them
-    _DS.add_ss13_2_meas!(ts, math, aggregation) # adds only the voltage of ss13_2 (not a substation but a node)
+    day_string = "_$(string(Dates.Month(chosen_day))[1])_$(string(Dates.Day(chosen_day))[1:2])" 
+    _DS.add_measurements!(day_string, ts, math, aggregation) # adds P,Q,|U| measurements for all gens/loads that have them
+    _DS.add_ss13_2_meas!(day_string, ts, math, aggregation) # adds only the voltage of ss13_2 (not a substation but a node)
     _DS.hack_ss19!(math) # one of the voltages of ss19 is flat. this hacky function replace that measurement with a better guess
     _DS.delete_ss17_meas!(math) # ss17 measurements' are flat lines. just remove them
 
@@ -80,3 +84,10 @@ p_v = _DS.plot_voltage_residuals_one_ts(res_v["2022-08-12T00:30:30"]["V"])
 # and you can plot timeseries for a chosen substation and quantity among "v", "p", and "q"
 # again you get three plots, one per phase
 p = _DS.plot_timeseries(res, vals, "v", "ss19", time_step_begin:time_step_step:time_step_end)
+
+StatsPlots.plot()
+for id in unique(df.Id)
+    dff = filter(x->x.Id == id, df)
+    StatsPlots.plot!(dff.v1, label="$id")
+end
+p

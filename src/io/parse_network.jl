@@ -4,7 +4,7 @@
 Accesses the send network's dss files and parses them to a PowerModelsDistribution `ENGINEERING` data model
 """
 parse_send_ntw_eng()::Dict =
- _PMD.parse_file(joinpath(_DS.BASE_DIR, "matts_files/send_network_220812/master.dss"), data_model=_PMD.ENGINEERING)
+ _PMD.parse_file(joinpath(_DS.BASE_DIR, "twin_data/send_network_model/master.dss"), data_model=_PMD.ENGINEERING)
  """
  parse_send_ntw_eng(pth::String)::Dict
 
@@ -23,7 +23,7 @@ parse_send_ntw_math()::Dict =
 new files
 """
 parse_send_new_ntw_eng()::Dict =
- _PMD.parse_file(joinpath(_DS.BASE_DIR, "matts_files/send_network_220912/send_network/master_dsse.dss"), data_model=_PMD.ENGINEERING)
+ _PMD.parse_file(joinpath(_DS.BASE_DIR, "twin_data/send_network_model/master_dsse.dss"), data_model=_PMD.ENGINEERING)
 """
 Generators seem to be parsed from .dss to PV buses and FREQUENCYDROOP control model in MATHEMATICAL model.
 This reverts them to PQ buses and sets ISOCHRONOUS control.
@@ -209,8 +209,8 @@ function new_dss2dsse_data_pipeline(ntw_eng::Dict; limit_demand::Bool=false, lim
     ntw_eng["transformer"]["xfmr_4"]["tm_set"] = [[1.0, 1.0, 1.0], [1.0625, 1.0625,1.0625]]
     ntw_eng["transformer"]["xfmr_15"]["tm_set"] = [[1.0, 1.0, 1.0], [1.0625, 1.0625,1.0625]]
     ntw_eng["transformer"]["xfmr_16"]["tm_set"] = [[1.0, 1.0, 1.0], [1.0625, 1.0625,1.0625]]
-    ntw_eng["transformer"]["xfmr_29"]["tm_set"] = [[1.0, 1.0, 1.0], [1.0625, 1.0625,1.0625]]
-    ntw_eng["transformer"]["xfmr_29"]["tm_set"] = [[1.0, 1.0, 1.0], [1.03125, 1.03125,1.03125]] #load ss29
+    #ntw_eng["transformer"]["xfmr_29"]["tm_set"] = [[1.0, 1.0, 1.0], [1.0625, 1.0625,1.0625]]
+    #ntw_eng["transformer"]["xfmr_29"]["tm_set"] = [[1.0, 1.0, 1.0], [1.03125, 1.03125,1.03125]] #load ss29
     
     math = _PMD.transform_data_model(ntw_eng)
     adjust_gen_data!(math) 
