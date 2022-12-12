@@ -112,6 +112,33 @@ function p_perunit(pow::Real, v1::Real, v2::Real, v3::Real, i1::Real, i2::Real, 
     return p1/1e5, p2/1e5, p3/1e5
 end
 """
+add_measurements!(...) only adds load and generator measurements, now we
+add the substation/slackbus measurements (bus 13)
+"""
+function add_ss13_meas!(day_string::String, timestep::Dates.DateTime, data::Dict, aggregation::Dates.TimePeriod)
+    add_ss13_1_meas!(day_string, timestep, data, aggregation)
+    add_ss13_2_meas!(day_string, timestep, data, aggregation)
+end
+
+function add_ss13_1_meas!(day_string::String, timestep::Dates.DateTime, data::Dict, aggregation::Dates.TimePeriod)
+    ts_df = create_measurement_df(day_string, timestep, aggregation)
+    if !haskey(data, "meas") || isempty(data["meas"])
+        data["meas"] = Dict{String, Any}()
+        m = 0
+    else
+        m = maximum(parse.(Int, collect(keys(data["meas"]))))
+    end
+
+    meas = filter(x->x.Id .== "ss13_1", ts_df)
+
+    @assert data["gen"]["4"]["name"] == "_virtual_gen.voltage_source.source" "Index of voltage source changed in data gen dictionary"
+    add_measurement!(data, data["gen"]["4"], meas, m+1, :pg)
+    add_measurement!(data, data["gen"]["4"], meas, m+2, :qg)
+    add_measurement!(data, data["gen"]["4"], meas, m+3, :vm)
+
+    nothing
+end
+"""
 All other measurements refer to a substation with load and generation.
 This has only voltage and no active load/gen, so we only add the voltage indeed
 """

@@ -4,7 +4,7 @@
 Accesses the send network's dss files and parses them to a PowerModelsDistribution `ENGINEERING` data model
 """
 parse_send_ntw_eng()::Dict =
- _PMD.parse_file(joinpath(_DS.BASE_DIR, "twin_data/send_network_model/master.dss"), data_model=_PMD.ENGINEERING)
+ _PMD.parse_file(joinpath(_DS.BASE_DIR, "twin_data/send_network_model/master_dsse.dss"), data_model=_PMD.ENGINEERING)
  """
  parse_send_ntw_eng(pth::String)::Dict
 
@@ -18,7 +18,7 @@ parse_send_ntw_eng(pth::String)::Dict =
 Accesses the send network's dss files and parses them to a PowerModelsDistribution `MATHEMATICAL` data model
 """
 parse_send_ntw_math()::Dict = 
- _PMD.parse_file(joinpath(_DS.BASE_DIR, "matts_files/send_network_220812/master.dss"), data_model=_PMD.MATHEMATICAL)
+ _PMD.parse_file(joinpath(_DS.BASE_DIR, "twin_data/send_network_model/master_dsse.dss"), data_model=_PMD.MATHEMATICAL)
 """
 new files
 """
@@ -38,12 +38,12 @@ function adjust_gen_data!(math::Dict)
     for (_, gen) in math["gen"]
         if !occursin("voltage_source", gen["source_id"])
             gen["control_mode"] = _PMD.ISOCHRONOUS
-        else
-            gen["name"] = "ss13_1" # TO CHECK HOW TO HANDLE THIS???
-            math["bus"]["$(gen["gen_bus"])"]["bus_type"] = 3
-            math["bus"]["$(gen["gen_bus"])"]["vmin"] = [0.0, 0.0, 0.0]
-            math["bus"]["$(gen["gen_bus"])"]["vmax"] = [2.0, 2.0, 2.0]
-            delete!(math["bus"]["$(gen["gen_bus"])"], "vm")
+        # else
+        #     gen["name"] = "ss13_1" # TO CHECK HOW TO HANDLE THIS???
+        #     math["bus"]["$(gen["gen_bus"])"]["bus_type"] = 3
+        #     math["bus"]["$(gen["gen_bus"])"]["vmin"] = [0.0, 0.0, 0.0]
+        #     math["bus"]["$(gen["gen_bus"])"]["vmax"] = [2.0, 2.0, 2.0]
+        #     delete!(math["bus"]["$(gen["gen_bus"])"], "vm")
         end
     end
 end
@@ -206,9 +206,9 @@ This function 1) adjusts some tap settings
                  For instance, the storage does charge so that's needed.
 """
 function new_dss2dsse_data_pipeline(ntw_eng::Dict; limit_demand::Bool=false, limit_bus::Bool=false)::Dict  
-    ntw_eng["transformer"]["xfmr_4"]["tm_set"] = [[1.0, 1.0, 1.0], [1.0625, 1.0625,1.0625]]
-    ntw_eng["transformer"]["xfmr_15"]["tm_set"] = [[1.0, 1.0, 1.0], [1.0625, 1.0625,1.0625]]
-    ntw_eng["transformer"]["xfmr_16"]["tm_set"] = [[1.0, 1.0, 1.0], [1.0625, 1.0625,1.0625]]
+    # ntw_eng["transformer"]["xfmr_4"]["tm_set"] = [[1.0, 1.0, 1.0], [1.0625, 1.0625,1.0625]]
+    # ntw_eng["transformer"]["xfmr_15"]["tm_set"] = [[1.0, 1.0, 1.0], [1.0625, 1.0625,1.0625]]
+    # ntw_eng["transformer"]["xfmr_16"]["tm_set"] = [[1.0, 1.0, 1.0], [1.0625, 1.0625,1.0625]]
     #ntw_eng["transformer"]["xfmr_29"]["tm_set"] = [[1.0, 1.0, 1.0], [1.0625, 1.0625,1.0625]]
     #ntw_eng["transformer"]["xfmr_29"]["tm_set"] = [[1.0, 1.0, 1.0], [1.03125, 1.03125,1.03125]] #load ss29
     
