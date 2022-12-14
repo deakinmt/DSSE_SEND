@@ -5,9 +5,9 @@ new circuit.send_network
 ! Source voltage changed to that the daytime voltage at sub11 matches MPN
 Edit Vsource.Source basekV=11 pu=1.00 R1=0.000001 X1=0.000001 R0=0.000001 X0=0.000001
 
-! Add short line to SS13, the DSSE voltage source [I couldn't find a tidy way to do this otherwise]
+! Add short line to SS13_1, the DSSE voltage source [I couldn't find a tidy way to do this otherwise]
 redirect linecodes.dss
-new line.wpd11kv bus1=sourcebus bus2=SS13 phases=3 linecode=al_c3_xlpe_swa_300 len=1e-5 units=km
+new line.wpd11kv bus1=sourcebus bus2=SS13_1 phases=3 linecode=al_c3_xlpe_swa_300 len=1e-5 units=km
 
 ! Add majority of network components
 Redirect xfmrs_dsse.dss
