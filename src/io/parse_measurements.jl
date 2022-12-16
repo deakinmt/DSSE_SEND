@@ -8,10 +8,10 @@ function add_measurements!(day_string::String, timestep::Dates.DateTime, data::D
     add_measurements_from_df!(data, ts_df)
 end
 
-function add_measurements!(day_string::String, timestep::Dates.DateTime, data::Dict, aggregation::Dates.TimePeriod; exclude::Vector{String}=String[])
+function add_balanced_measurements!(day_string::String, timestep::Dates.DateTime, data::Dict, aggregation::Dates.TimePeriod; exclude::Vector{String}=String[])
     file = joinpath(_DS.BASE_DIR, "twin_data/telemetry/2022$day_string/all_measurements$day_string.csv")
     ts_df = create_measurement_df(day_string, timestep, aggregation, file; exclude=exclude)
-    add_measurements_from_df!(data, ts_df)
+    add_measurements_from_df_balanced!(data, ts_df)
 end
 
 function create_measurement_df(day_string::String, timestep::Dates.DateTime, aggregation::Dates.TimePeriod; exclude::Vector{String}=String[])
@@ -67,6 +67,42 @@ function add_measurements_from_df!(data::Dict, ts_df::DataFrames.DataFrame)
     end
 end
 
+function add_measurements_from_df_balanced!(data::Dict, ts_df::DataFrames.DataFrame)
+    data["meas"] = Dict{String, Any}()
+    m = 1
+    for (_, load) in data["load"]
+        meas = filter(x->x.Id .== load["name"], ts_df)
+        add_measurement_balanced!(data, load, meas, m, :pd)
+        add_measurement_balanced!(data, load, meas, m+1, :qd)
+        add_measurement!(data, load, meas, m+2, :vd)
+        m+=3
+    end
+    m = maximum(parse.(Int, collect(keys(data["meas"]))))+1
+    for (_, gen) in data["gen"]
+        meas = filter(x->x.Id .== gen["name"], ts_df)
+        add_measurement_balanced!(data, gen, meas, m, :pg)
+        add_measurement_balanced!(data, gen, meas, m+1, :qg)
+        add_measurement!(data, gen, meas, m+2, :vd)
+        m+=3
+    end
+end
+
+function add_measurement_balanced!(data::Dict, d::Dict, meas::DataFrames.DataFrame, m::Int, var::Symbol)
+    
+    cmp, cmp_id = if var ∈ [:pd, :qd]
+            :load, d["index"] 
+          elseif var ∈ [:pg, :qg]
+            :gen, d["index"]
+          else
+            :bus, haskey(d, "load_bus") ? d["load_bus"] : d["gen_bus"] 
+          end
+
+    if !isempty(meas)
+        dst = build_dst_balanced(meas, data, d, var, haskey(d, "reverse_generator")) 
+        data["meas"]["$m"] = Dict("var"=>var, "cmp"=> cmp, "cmp_id"=>cmp_id, "dst"=>dst, "name"=>meas.Id)
+    end
+end
+
 function add_measurement!(data::Dict, d::Dict, meas::DataFrames.DataFrame, m::Int, var::Symbol)
     
     cmp, cmp_id = if var ∈ [:pd, :qd]
@@ -94,8 +130,27 @@ function build_dst(meas::DataFrames.DataFrame, data::Dict, d::Dict, var::Symbol,
         if isnan(m3) m3 = 1e-7 end
         if any(isnan.([m1,m2,m3])) @warn "measurement for bus $bus_id has NaN(s)!" end
     elseif var ∈ [:pd, :qd, :pg, :qg]
-        scale =  d["name"] ∈ ["solar", "storage", "wt"] ? 1.0 : 1000 #except for those three, measurements are in W, not in kW (probably)
+        scale =  d["name"] ∈ ["solar", "storage", "wt", "_virtual_gen.voltage_source.source"] ? 1.0 : 1000 #except for those three, measurements are in W, not in kW (probably)
         m1, m2, m3 = p_subdivision(meas[Symbol(String(var)[1])][1], meas.v1[1], meas.v2[1], meas.v3[1], meas.i1[1], meas.i2[1], meas.i3[1])./(data["settings"]["sbase"]*scale)
+        if reverse m1, m2, m3 = -m1,-m2,-m3 end
+        σ = measurement_error_model(meas, data, var, bus_id)
+        if isnan(m1) m1 = 1e-7 end
+        if isnan(m2) m2 = 1e-7 end
+        if isnan(m3) m3 = 1e-7 end
+        if any(isnan.([m1,m2,m3])) @warn "measurement for load $(d["index"]) has NaN(s)!" end
+    else
+        @error "Measurement $var not recognized for $(meas.Id[1])"
+    end
+
+    return [_DST.Normal(m1, σ[1]), _DST.Normal(m2, σ[2]), _DST.Normal(m3, σ[3])]
+end
+
+function build_dst_balanced(meas::DataFrames.DataFrame, data::Dict, d::Dict, var::Symbol, reverse::Bool)
+    bus_id = haskey(d, "load_bus") ? d["load_bus"] : d["gen_bus"] 
+    
+    if var ∈ [:pd, :qd, :pg, :qg]
+        scale =  d["name"] ∈ ["solar", "storage", "wt"] ? 1.0 : 1000 #except for those three, measurements are in W, not in kW (probably)
+        m1, m2, m3 = meas[Symbol(String(var)[1])][1]/3/(data["settings"]["sbase"]*scale), meas[Symbol(String(var)[1])][1]/3/(data["settings"]["sbase"]*scale), meas[Symbol(String(var)[1])][1]/3/(data["settings"]["sbase"]*scale) #p_subdivision(meas[Symbol(String(var)[1])][1], meas.v1[1], meas.v2[1], meas.v3[1], meas.i1[1], meas.i2[1], meas.i3[1])./(data["settings"]["sbase"]*scale)
         if reverse m1, m2, m3 = -m1,-m2,-m3 end
         σ = measurement_error_model(meas, data, var, bus_id)
         if isnan(m1) m1 = 1e-7 end
@@ -193,6 +248,37 @@ function generators_as_loads!(math::Dict)
     end
 end
 
+function generators_as_loads_pf!(math::Dict)
+    l = maximum(collect(parse.(Int, (keys(math["load"])))))
+    for (g, gen) in math["gen"]
+        if !occursin("voltage_source", gen["name"])
+            l+=1
+            math["load"]["$l"] = Dict{String, Any}()
+            math["load"]["$l"]["model"] = _PMD.POWER
+            math["load"]["$l"]["configuration"] = _PMD.WYE
+            math["load"]["$l"]["connections"] = [1,2,3]
+            math["load"]["$l"]["status"] = 1
+            math["load"]["$l"]["dispatchable"] = 0
+            math["load"]["$l"]["vnom_kv"] = 1.0
+            math["load"]["$l"]["name"] = gen["name"] 
+            math["load"]["$l"]["source_id"] = gen["source_id"]
+            math["load"]["$l"]["load_bus"] = gen["gen_bus"] 
+            math["load"]["$l"]["vbase"] = gen["vbase"]
+
+            math["load"]["$l"]["pd"] = gen["pmax"]
+            math["load"]["$l"]["qd"] = gen["qmax"]
+            math["load"]["$l"]["pmax"] = math["load"]["$l"]["pd"]
+            math["load"]["$l"]["qmax"] = math["load"]["$l"]["qd"]
+            math["load"]["$l"]["pmin"] = -math["load"]["$l"]["pd"]
+            math["load"]["$l"]["qmin"] = -math["load"]["$l"]["qd"]
+            math["load"]["$l"]["index"] = l
+
+            math["load"]["$l"]["reverse_generator"] = true
+            math["bus"]["$(gen["gen_bus"])"]["bus_type"] = 1
+            delete!(math["gen"],g)
+        end
+    end
+end
 # legacy: delete?
 # function hack_ss19!(data)
 #     for (_,meas) in data["meas"]
