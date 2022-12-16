@@ -8,6 +8,10 @@ function solve_acr_mc_se(data::Union{Dict{String,<:Any},String}, solver; kwargs.
     return solve_mc_se(data, _PMD.ACRUPowerModel, solver; kwargs...)
 end
 
+function solve_ivr_mc_se(data::Union{Dict{String,<:Any},String}, solver; kwargs...)
+    return solve_mc_se(data, _PMD.IVRUPowerModel, solver; kwargs...)
+end
+
 function solve_mc_se(data::Union{Dict{String,<:Any},String}, model_type::Type, solver; kwargs...)
     if haskey(data["se_settings"], "criterion")
         _PMDSE.assign_unique_individual_criterion!(data)
@@ -27,14 +31,15 @@ end
 function build_mc_se(pm::_PMD.AbstractUnbalancedPowerModel)
 
     # Variables
+    variable_line_to_line_voltage_magnitude(pm; bounded = false)
     _PMDSE.variable_mc_bus_voltage(pm; bounded = true)
-    _PMD.variable_mc_branch_power(pm; bounded = true)
-    _PMD.variable_mc_transformer_power(pm; bounded = true, report=false)
-    _PMD.variable_mc_generator_power(pm; bounded = true)
+    _PMD.variable_mc_branch_power(pm; bounded = false)
+    _PMD.variable_mc_transformer_power(pm; bounded = false, report=false)
+    _PMD.variable_mc_generator_power(pm; bounded = false)
     _PMDSE.variable_mc_load(pm; report = true)
     _PMD.variable_mc_transformer_power(pm; bounded=false)
     _PMDSE.variable_mc_residual(pm; bounded = true)
-    _PMDSE.variable_mc_measurement(pm; bounded = false)
+    _DS.variable_mc_measurement(pm; bounded = false)
 
     # Constraints
     for (i,gen) in _PMD.ref(pm, :gen)
@@ -46,12 +51,16 @@ function build_mc_se(pm::_PMD.AbstractUnbalancedPowerModel)
     end
     for (i,bus) in _PMD.ref(pm, :bus)
         _PMDSE.constraint_mc_power_balance_se(pm, i)
+        bus_with_vd_meas = [meas["cmp_id"] for (i, meas) in _PMD.ref(pm, 0, :meas) if meas["var"] == :vd]
+        if i ∈ bus_with_vd_meas
+            _DS.constraint_line_to_line_voltage(pm,i)
+        end
     end
     for (i,branch) in _PMD.ref(pm, :branch)
         _PMD.constraint_mc_ohms_yt_from(pm, i)
         _PMD.constraint_mc_ohms_yt_to(pm,i)
     end
-    for (i,meas) in _PMD.ref(pm, :meas)
+    for (i, meas) in _PMD.ref(pm, :meas)
         _PMDSE.constraint_mc_residual(pm, i)
     end
 

@@ -3,6 +3,7 @@ module DSSE_SEND
 import Dates
 import Distributions as _DST
 import CSV, DataFrames
+import JuMP
 import PowerModelsDistributionStateEstimation as _PMDSE
 import PowerModelsDistribution as _PMD
 import PowerModelsAnalytics: plot_network
@@ -19,6 +20,8 @@ include("io/parse_network.jl")
 include("io/plot_network.jl")
 include("io/viz.jl")
 
+include("dsse/constraint.jl")
 include("dsse/dsse_with_transfos.jl")
+include("dsse/variable.jl")
 
 end
