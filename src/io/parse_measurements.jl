@@ -54,7 +54,7 @@ function add_measurements_from_df!(data::Dict, ts_df::DataFrames.DataFrame)
         meas = filter(x->x.Id .== load["name"], ts_df)
         add_measurement!(data, load, meas, m, :pd)
         add_measurement!(data, load, meas, m+1, :qd)
-        add_measurement!(data, load, meas, m+2, :vm)
+        add_measurement!(data, load, meas, m+2, :vd)
         m+=3
     end
     m = maximum(parse.(Int, collect(keys(data["meas"]))))+1
@@ -62,7 +62,7 @@ function add_measurements_from_df!(data::Dict, ts_df::DataFrames.DataFrame)
         meas = filter(x->x.Id .== gen["name"], ts_df)
         add_measurement!(data, gen, meas, m, :pg)
         add_measurement!(data, gen, meas, m+1, :qg)
-        add_measurement!(data, gen, meas, m+2, :vm)
+        add_measurement!(data, gen, meas, m+2, :vd)
         m+=3
     end
 end
@@ -78,38 +78,51 @@ function add_measurement!(data::Dict, d::Dict, meas::DataFrames.DataFrame, m::In
           end
 
     if !isempty(meas)
-        dst = build_dst(meas, data, d, var) 
+        dst = build_dst(meas, data, d, var, haskey(d, "reverse_generator")) 
         data["meas"]["$m"] = Dict("var"=>var, "cmp"=> cmp, "cmp_id"=>cmp_id, "dst"=>dst, "name"=>meas.Id)
     end
 end
 
-function build_dst(meas::DataFrames.DataFrame, data::Dict, d::Dict, var::Symbol)
-    if var == :vm
-        bus_id = haskey(d, "load_bus") ? d["load_bus"] : d["gen_bus"] 
-        m1, m2, m3 = (meas.v1[1], meas.v2[1], meas.v3[1])./(sqrt(3)*data["bus"]["$bus_id"]["vbase"]*1000)
-        σ = maximum([abs(0.002/3*Statistics.mean([m1, m2, m3])), 1e-7]) #voltage tolerances are ±0.2%
-        if isnan(σ) σ = 1e-7 end
+function build_dst(meas::DataFrames.DataFrame, data::Dict, d::Dict, var::Symbol, reverse::Bool)
+    bus_id = haskey(d, "load_bus") ? d["load_bus"] : d["gen_bus"] 
+    if var == :vd
+        m1, m2, m3 = (meas.v1[1], meas.v2[1], meas.v3[1])./(data["bus"]["$bus_id"]["vbase"]*1000)
+        #m1, m2, m3 = (meas.v1[1], meas.v2[1], meas.v3[1])./(sqrt(3)*data["bus"]["$bus_id"]["vbase"]*1000)
+        σ = fill(sqrt(3)*0.005/3, 3) #voltage tolerances are ±0.5%
         if isnan(m1) m1 = 1e-7 end
         if isnan(m2) m2 = 1e-7 end
         if isnan(m3) m3 = 1e-7 end
+        if any(isnan.([m1,m2,m3])) @warn "measurement for bus $bus_id has NaN(s)!" end
     elseif var ∈ [:pd, :qd, :pg, :qg]
-        m1, m2, m3 = p_perunit(meas[Symbol(String(var)[1])][1], meas.v1[1], meas.v2[1], meas.v3[1], meas.i1[1], meas.i2[1], meas.i3[1])
-        σ = maximum([abs(0.005/3*Statistics.mean([m1, m2, m3])), 1e-7])
-        if isnan(σ) σ = 1e-7 end
+        scale =  d["name"] ∈ ["solar", "storage", "wt"] ? 1.0 : 1000 #except for those three, measurements are in W, not in kW (probably)
+        m1, m2, m3 = p_subdivision(meas[Symbol(String(var)[1])][1], meas.v1[1], meas.v2[1], meas.v3[1], meas.i1[1], meas.i2[1], meas.i3[1])./(data["settings"]["sbase"]*scale)
+        if reverse m1, m2, m3 = -m1,-m2,-m3 end
+        σ = measurement_error_model(meas, data, var, bus_id)
         if isnan(m1) m1 = 1e-7 end
         if isnan(m2) m2 = 1e-7 end
         if isnan(m3) m3 = 1e-7 end
+        if any(isnan.([m1,m2,m3])) @warn "measurement for load $(d["index"]) has NaN(s)!" end
     else
         @error "Measurement $var not recognized for $(meas.Id[1])"
     end
-    return [_DST.Normal(m1, σ), _DST.Normal(m2, σ), _DST.Normal(m3, σ)]
+
+    return [_DST.Normal(m1, σ[1]), _DST.Normal(m2, σ[2]), _DST.Normal(m3, σ[3])]
 end
 
-function p_perunit(pow::Real, v1::Real, v2::Real, v3::Real, i1::Real, i2::Real, i3::Real)
+function measurement_error_model(meas, data, var, bus_id)
+    if minimum([meas.i1[1], meas.i2[1], meas.i3[1]]) < 120
+        max_err = var ∈ [:pd, :pg] ? fill(0.01*120*(data["bus"]["$bus_id"]["vbase"]*1000)/1e5, 3) : fill(0.02*120*(data["bus"]["$bus_id"]["vbase"]*1000/1e5), 3)
+    else
+        max_err = var ∈ [:pd, :pg] ? [meas.i1[1], meas.i2[1], meas.i3[1]]*0.01*(data["bus"]["$bus_id"]["vbase"]*1000/1e5) : [meas.i1[1], meas.i2[1], meas.i3[1]]*0.02*(data["bus"]["$bus_id"]["vbase"]*1000/1e5)
+    end
+    return max_err./(3*data["settings"]["sbase"]) #sigma
+end
+
+function p_subdivision(pow::Real, v1::Real, v2::Real, v3::Real, i1::Real, i2::Real, i3::Real)
     p1 = pow*(v1*i1)/sum([v1*i1, v2*i2, v3*i3])
     p2 = pow*(v2*i2)/sum([v1*i1, v2*i2, v3*i3])
     p3 = pow*(v3*i3)/sum([v1*i1, v2*i2, v3*i3])
-    return p1/1e5, p2/1e5, p3/1e5
+    return p1, p2, p3
 end
 """
 add_measurements!(...) only adds load and generator measurements, now we
@@ -134,7 +147,7 @@ function add_ss13_1_meas!(day_string::String, timestep::Dates.DateTime, data::Di
     @assert data["gen"]["4"]["name"] == "_virtual_gen.voltage_source.source" "Index of voltage source changed in data gen dictionary"
     add_measurement!(data, data["gen"]["4"], meas, m+1, :pg)
     add_measurement!(data, data["gen"]["4"], meas, m+2, :qg)
-    add_measurement!(data, data["gen"]["4"], meas, m+3, :vm)
+    add_measurement!(data, data["gen"]["4"], meas, m+3, :vd)
 
     nothing
 end
@@ -152,27 +165,44 @@ function add_ss13_2_meas!(day_string::String, timestep::Dates.DateTime, data::Di
     end
 
     meas = filter(x->x.Id .== "ss13_2", ts_df)
-    bus_id = [b for (b,bus) in data["bus"] if bus["name"] == "ss13a"][1]
+    bus_id = [b for (b,bus) in data["bus"] if bus["name"] == "ss13_2"][1]
 
-    m1, m2, m3 = (meas.v1[1], meas.v2[1], meas.v3[1])./(sqrt(3)*data["bus"][bus_id]["vbase"]*1000)
+    m1, m2, m3 = (meas.v1[1], meas.v2[1], meas.v3[1])./(data["bus"][bus_id]["vbase"]*1000)
+    #m1, m2, m3 = (meas.v1[1], meas.v2[1], meas.v3[1])./(sqrt(3)*data["bus"][bus_id]["vbase"]*1000)
     σ = abs(0.002/3*Statistics.mean([m1, m2, m3]))
 
-    data["meas"]["$(m+1)"] = Dict("var"=>:vm, "cmp" => :bus, "cmp_id"=>parse(Int, bus_id), 
+    data["meas"]["$(m+1)"] = Dict("var"=>:vd, "cmp" => :bus, "cmp_id"=>parse(Int, bus_id), 
                         "dst" => [_DST.Normal(m1, σ), _DST.Normal(m2, σ), _DST.Normal(m3, σ)],
                         "name" => "ss13_2"
                         )
     nothing
 end
 
-function hack_ss19!(data)
-    for (_,meas) in data["meas"]
-        if meas["name"][1] == "ss19" && meas["var"] == :vm
-            v1, v2, v3 = _DST.mean.(meas["dst"])
-            if isapprox(v1, 1.05008, atol = 0.0001)
-                σ = _DST.std(meas["dst"][2])
-                v1 = Statistics.mean([v2, v3])
-                meas["dst"][1] = _DST.Normal(v1,σ*2)
-            end
+function generators_as_loads!(math::Dict)
+    l = maximum(collect(parse.(Int, (keys(math["load"])))))
+    for (g, gen) in math["gen"]
+        if !occursin("voltage_source", gen["name"])
+            l+=1
+            math["load"]["$l"] = deepcopy(math["load"]["3"]) #or any other laod
+            math["load"]["$l"]["name"] = gen["name"] #or any other laod
+            math["load"]["$l"]["load_bus"] = gen["gen_bus"] #or any other laod
+            math["load"]["$l"]["vbase"] = 6.35085
+            math["load"]["$l"]["reverse_generator"] = true
+            delete!(math["gen"],g)
         end
     end
 end
+
+# legacy: delete?
+# function hack_ss19!(data)
+#     for (_,meas) in data["meas"]
+#         if meas["name"][1] == "ss19" && meas["var"] == :vd
+#             v1, v2, v3 = _DST.mean.(meas["dst"])
+#             if isapprox(v1, 1.05008, atol = 0.0001)
+#                 σ = _DST.std(meas["dst"][2])
+#                 v1 = Statistics.mean([v2, v3])
+#                 meas["dst"][1] = _DST.Normal(v1,σ*2)
+#             end
+#         end
+#     end
+# end

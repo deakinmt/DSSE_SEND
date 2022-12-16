@@ -19,8 +19,8 @@ if in_volts is true, then it returns them in volts
 function get_voltage_residuals_one_ts(data::Dict, sol::Dict; in_volts::Bool=true)
     ρ = Dict{String, Any}()
     for (m,meas) in data["meas"]
-        if meas["var"] == :vm
-            vm_se   = sol["solution"]["bus"]["$(meas["cmp_id"])"]["vm"]
+        if meas["var"] ∈ [:vd, :vm]
+            vm_se   = sol["solution"]["bus"]["$(meas["cmp_id"])"]["$(meas["var"])"]
             vm_meas = _DST.mean.(meas["dst"])
             id = meas["name"] isa Vector ? meas["name"][1] : meas["name"]
             ρ["$id"] = in_volts ? (vm_se-vm_meas)*data["bus"]["$(meas["cmp_id"])"]["vbase"]*1000*sqrt(3) : vm_se-vm_meas
@@ -32,7 +32,7 @@ end
 function get_voltage_measurement(data; in_volts::Bool=true)
     ρ = Dict{String, Any}()
     for (m,meas) in data["meas"]
-        if meas["var"] == :vm
+        if meas["var"] ∈ [:vd, :vm]
             vm_meas = _DST.mean.(meas["dst"])
             id = meas["name"] isa Vector ? meas["name"][1] : meas["name"]
             ρ["$id"] = in_volts ? vm_meas*data["bus"]["$(meas["cmp_id"])"]["vbase"]*1000*sqrt(3) : vm_meas
