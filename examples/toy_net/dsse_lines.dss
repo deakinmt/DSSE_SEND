@@ -1,0 +1,5 @@
+! NB: based on lines_full.dss; case33bw_lines
+New Line.l1 Phases=3 Bus1=1 Bus2=2 R1=3 X1=1.5 R0=9 X0=1.5 enabled=y length=1 
+New Line.l2 Phases=3 Bus1=2 Bus2=3 R1=3 X1=1.5 R0=9 X0=1.5 enabled=y length=1 
+New Line.l3 Phases=3 Bus1=2 Bus2=4 R1=2 X1=1.0 R0=6 X0=1.0 enabled=y length=1 
+New Line.l4 Phases=3 Bus1=2 Bus2=5 R1=1 X1=0.5 R0=3 X0=0.5 enabled=y length=1 

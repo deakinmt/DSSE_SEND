@@ -1,0 +1,4 @@
+! NB: based on case33bw_loads.
+New Load.Ld1 Bus1=3 Phases=3 Conn=Wye Model=1 vmin=0.1 vmax=10.0 kV=12.66 kW=400 kvar=150 
+New Load.Ld2 Bus1=4 Phases=3 Conn=Wye Model=1 vmin=0.1 vmax=10.0 kV=12.66 kW=300 kvar=100
+New Load.Ld3 Bus1=5 Phases=3 Conn=Wye Model=1 vmin=0.1 vmax=10.0 kV=12.66 kW=200 kvar=80
