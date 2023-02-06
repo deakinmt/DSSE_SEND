@@ -1,7 +1,18 @@
 """
-Alias for PowerModelsAnalytics.jl functionality to plot a graph of the network
+Alias for PowerModelsAnalytics.jl functionality to plot a graph of the network.
+This function requires a PowerModelsDistribution network dictionary `ntw`. 
+`ntw` can be both of the `MATHEMATICAL` or `ENGINEERING` type but the latter is more
+intuitive to interprete.
 """
 plot_send_network(ntw::Dict; kwargs...) = plot_network(ntw; kwargs...)
+"""
+Alias for PowerModelsAnalytics.jl functionality to plot a graph of the network.
+It queries the `ENGINEERING` data model of the network before plotting.
+"""
+function plot_send_network() 
+    eng = parse_send_ntw_eng() 
+    plot_send_network(eng)
+end
 """
 `function quickplot_send_network`.
 Uses PowerModelsAnalytics.jl functionality to plot a graph of the network, passing some

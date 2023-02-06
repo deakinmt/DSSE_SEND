@@ -1,5 +1,5 @@
 """
-    add_measurements!(day_string::String, timestep::Dates.DateTime, data::Dict, aggregation::Dates.TimePeriod; exclude::Vector{String}=String[], add_ss13::Bool=true)
+    add_measurements!(timestep::Dates.DateTime, data::Dict, aggregation::Dates.TimePeriod; exclude::Vector{String}=String[], add_ss13::Bool=true)
 
 Function that accesses the digital twin measurement file and adds the measurements to a PowerModelsDistribution dictionary (`data`) so that 
 it can be used to run a state estimation calculation.
@@ -9,7 +9,6 @@ IMPORTANT NOTES: 1) by default, only P,Q and |U| measurements are added. Current
                  2) some assumptions are taken to split the aggregated power measurements across the three phases. Please check the paper discussion.
                  3) if the above are not satisfactory, users can create their own measurement parsers, in similar fashions. This function can be used as "model" 
     Arguments:
-    - day_string:  string that complements the file path and picks the measurements that refer to the intended day
     - timestep:    DateTime entry that picks the time step of the given day for which measurements are wanted
     - data:        PowerModelsDistribution `MATHEMATICAL` data dictionary for the SEND network
     - aggregation: the measurement csv file reports measurements with a granularity of 30 seconds. If aggregation is N × 30 seconds, with N > 1,
@@ -19,29 +18,32 @@ IMPORTANT NOTES: 1) by default, only P,Q and |U| measurements are added. Current
                    are consistently corrupted. Or to explore under-determined scenarios, etc.
     - add_ss13:    if `true` (default), measurements for the voltage source are added, else these are ignored
 """
-function add_measurements!(day_string::String, timestep::Dates.DateTime, data::Dict, aggregation::Dates.TimePeriod; exclude::Vector{String}=String[], add_ss13::Bool=true)::Nothing
-    file = joinpath(_DS.BASE_DIR, "twin_data/telemetry/2022$day_string/all_measurements$day_string.csv")
+function add_measurements!(timestep::Dates.DateTime, data::Dict, aggregation::Dates.TimePeriod; exclude::Vector{String}=String[], add_ss13::Bool=true)::Nothing
+    day = Dates.Day(timestep).value
+    month = Dates.Month(timestep).value
+    file = joinpath(_DS.BASE_DIR, "twin_data/telemetry/2022_$(month)_$(day)/all_measurements_$(month)_$(day).csv")
     ts_df = create_measurement_df(file, timestep, aggregation; exclude=exclude)
     add_measurements_from_df!(data, ts_df)
     if add_ss13 _DS.add_ss13_meas!(file, timestep, data, aggregation) end
     nothing
 end
 """
-    add_balanced_measurements!(day_string::String, timestep::Dates.DateTime, data::Dict, aggregation::Dates.TimePeriod; exclude::Vector{String}=String[], add_ss13::Bool=true)
+    add_balanced_measurements!(timestep::Dates.DateTime, data::Dict, aggregation::Dates.TimePeriod; exclude::Vector{String}=String[], add_ss13::Bool=true)
 Similar to `add_measurements!` (see that for more info) but specifically subdivides aggregated three-phase power measurements ̲EQUALLY per phase.
 """
-function add_balanced_measurements!(day_string::String, timestep::Dates.DateTime, data::Dict, aggregation::Dates.TimePeriod; exclude::Vector{String}=String[])::Nothing
-    file = joinpath(_DS.BASE_DIR, "twin_data/telemetry/2022$day_string/all_measurements$day_string.csv")
+function add_balanced_measurements!(timestep::Dates.DateTime, data::Dict, aggregation::Dates.TimePeriod; exclude::Vector{String}=String[])::Nothing
+    day = Dates.Day(timestep).value
+    month = Dates.Month(timestep).value
+    file = joinpath(_DS.BASE_DIR, "twin_data/telemetry/2022_$(month)_$(day)/all_measurements_$(month)_$(day).csv")
     ts_df = create_measurement_df(file, timestep, aggregation; exclude=exclude)
     add_measurements_from_df_balanced!(data, ts_df)
     if add_ss13 _DS.add_ss13_meas!(file, timestep, data, aggregation) end
     nothing
 end
 """
-Create_measurement_df(day_string::String, timestep::Dates.DateTime, aggregation::Dates.TimePeriod; exclude::Vector{String}=String[])
+Create_measurement_df(timestep::Dates.DateTime, aggregation::Dates.TimePeriod; exclude::Vector{String}=String[])
     creates a dataframe from the measurements csv file. This is later use to build the measurement dictionary, e.g., in function `add_measurements!`
     Arguments:
-    - day_string:  string that complements the file path and picks the measurements that refer to the intended day
     - timestep:    DateTime entry that picks the time step of the given day for which measurements are wanted
     - aggregation: the measurement csv file reports measurements with a granularity of 30 seconds. If aggregation is N × 30 seconds, with N > 1,
                    this function takes the measurements of the N-1 previous time steps and combines them to that of `timestep` (averaging).
@@ -49,8 +51,10 @@ Create_measurement_df(day_string::String, timestep::Dates.DateTime, aggregation:
     - exclude:     allows the user to NOT create measurements for some loads/gens, e.g., "ss17". Might be useful if the measurements of a certain device 
                    are consistently corrupted. Or to explore under-determined scenarios, etc.
 """
-function create_measurement_df(day_string::String, timestep::Dates.DateTime, aggregation::Dates.TimePeriod; exclude::Vector{String}=String[])::DataFrames.DataFrame
-    file = joinpath(_DS.BASE_DIR, "twin_data/telemetry/2022$day_string/all_measurements$day_string.csv")
+function create_measurement_df(timestep::Dates.DateTime, aggregation::Dates.TimePeriod; exclude::Vector{String}=String[])::DataFrames.DataFrame
+    day = Dates.Day(timestep).value
+    month = Dates.Month(timestep).value
+    file = joinpath(_DS.BASE_DIR, "twin_data/telemetry/2022_$(month)_$(day)/all_measurements_$(month)_$(day).csv")
     meas_df = CSV.read(file)
     create_measurement_df(meas_df, timestep, aggregation, exclude=exclude)
 end
@@ -296,7 +300,7 @@ function measurement_error_model(meas::DataFrames.DataFrame, data::Dict, var::Sy
     return max_err./(3*data["settings"]["sbase"]) #σs in per unit
 end
 """
-    add_ss13_meas!(day_string::String, timestep::Dates.DateTime, data::Dict, aggregation::Dates.TimePeriod)
+    add_ss13_meas!(file::String, timestep::Dates.DateTime, data::Dict, aggregation::Dates.TimePeriod)
 Function `add_measurements!(...)` only adds load measurements. See add_measurements! for the argument definition
 This function complements it by adding the voltage source/slack bus measurements of ss13_1
 and the voltage-only measurements for ss13_2 (open switch so no power/current measurements).
@@ -306,7 +310,7 @@ function add_ss13_meas!(file::String, timestep::Dates.DateTime, data::Dict, aggr
     add_ss13_2_meas!(file, timestep, data, aggregation)
 end
 """
-    add_ss13_1_meas!(day_string::String, timestep::Dates.DateTime, data::Dict, aggregation::Dates.TimePeriod)
+    add_ss13_1_meas!(file::String, timestep::Dates.DateTime, data::Dict, aggregation::Dates.TimePeriod)
 ss13_1 corresponds to the voltage source. This function adds its measurements (P,Q,|U|) to a network `data` dictionary.
 This complements `add_measurements!` which does not provide support to add voltage source measurements.
 See `add_ss13_meas!` and `add_measurements!` for more info and a description of the arguments.
@@ -328,7 +332,7 @@ function add_ss13_1_meas!(file::String, timestep::Dates.DateTime, data::Dict, ag
     add_measurement!(data, data["gen"]["4"], meas, m+3, :vd)
 end
 """
-    add_ss13_2_meas!(day_string::String, timestep::Dates.DateTime, data::Dict, aggregation::Dates.TimePeriod)
+    add_ss13_2_meas!(file::String, timestep::Dates.DateTime, data::Dict, aggregation::Dates.TimePeriod)
 ss13_2 corresponds to a measurement on bus ss13a in the SEND single-line equivalent picture in the README.
 Only voltage measurements are added, there is no active component; the switch to the HV/MV station is open.
 See `add_ss13_meas!` and `add_measurements!` for more info and arguments
