@@ -1,5 +1,16 @@
+"""
+Alias for PowerModelsAnalytics.jl functionality to plot a graph of the network
+"""
 plot_send_network(ntw::Dict; kwargs...) = plot_network(ntw; kwargs...)
-## add docs!
+"""
+`function quickplot_send_network`.
+Uses PowerModelsAnalytics.jl functionality to plot a graph of the network, passing some
+settings to generate a tidy, readable figure.
+Arguments:
+    - ntw:     network data dictionary
+    - savefig: if `true`, a figure is saved with path `figname`
+    - figname: path/name of the figure to save. Supported extensions include png and pdf.
+"""
 function quickplot_send_network(ntw::Dict; savefig::Bool=false, figname::String="send_ntw.png")
     
     if !savefig

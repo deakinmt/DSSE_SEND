@@ -1,4 +1,11 @@
-function create_all_measurements_csv(path::String, filename::String)
+"""
+This function is used to "merge" the individual measurement csv files into
+a single dataframe and produces a single csv file.
+This was only needed after importing files from the API for the first time.
+Function is kept just in case we need to get new files at some point, and is not 
+included in the package.
+"""
+function create_single_measurement_csv(path::String, filename::String)
     colnames = [:Id, :IsoDatetime, :v1, :v2, :v3, :i1, :i2, :i3, :p, :q, :pf]
     all_measurements = DataFrames.DataFrame(repeat([[]], 11), colnames)
     csv_dir = joinpath(_DS.BASE_DIR, path)

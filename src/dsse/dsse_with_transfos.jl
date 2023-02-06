@@ -8,10 +8,14 @@ function solve_acr_mc_se(data::Union{Dict{String,<:Any},String}, solver; kwargs.
     return solve_mc_se(data, _PMD.ACRUPowerModel, solver; kwargs...)
 end
 
+"solves the state estimation in current and voltage rectangular coordinates (IVR formulation)"
 function solve_ivr_mc_se(data::Union{Dict{String,<:Any},String}, solver; kwargs...)
+    error("Currently, only ACR and ACP formulations are available. We are working on it. 
+           If you would like this feature, please open an issue.")
     return solve_mc_se(data, _PMD.IVRUPowerModel, solver; kwargs...)
 end
 
+"generic state estimation solver function"
 function solve_mc_se(data::Union{Dict{String,<:Any},String}, model_type::Type, solver; kwargs...)
     if haskey(data["se_settings"], "criterion")
         _PMDSE.assign_unique_individual_criterion!(data)
@@ -24,11 +28,11 @@ function solve_mc_se(data::Union{Dict{String,<:Any},String}, model_type::Type, s
         data["se_settings"]["number_of_gaussian"] = 10
         @warn "Estimation criterion set to default value, edit data dictionary if you wish to change it."
     end
-    return _PMD.solve_mc_model(data, model_type, solver, build_mc_se; kwargs...)
+    return _PMD.solve_mc_model(data, model_type, solver, build_mc_send_dsse; kwargs...)
 end
 
 "specification of the state estimation problem for a bus injection model - ACP and ACR formulations"
-function build_mc_se(pm::_PMD.AbstractUnbalancedPowerModel)
+function build_mc_send_dsse(pm::_PMD.AbstractUnbalancedPowerModel)
 
     # Variables
     variable_line_to_line_voltage_magnitude(pm; bounded = false)

@@ -17,7 +17,7 @@ include("core/run_dsse_multiple_ts.jl")
 
 include("io/parse_measurements.jl")
 include("io/parse_network.jl")
-include("io/plot_network.jl")
+include("io/plot_network_graph.jl")
 include("io/viz.jl")
 
 include("dsse/constraint.jl")

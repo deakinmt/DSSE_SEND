@@ -1,5 +1,6 @@
 """
-Creates auxiliary variable for line-to-line voltages
+Creates auxiliary variables for line-to-line voltages.
+These are currently not present by default in PowerModelsDistributionStateEstimation (v0.6.x)
 """
 function variable_line_to_line_voltage_magnitude(pm::_PMD.AbstractUnbalancedPowerModel; nw::Int=_PMD.nw_id_default, bounded::Bool=true)
     
@@ -27,8 +28,8 @@ function variable_line_to_line_voltage_magnitude(pm::_PMD.AbstractUnbalancedPowe
     end
 end
 """
-Variation of the namesake _PMDSE variable, that allows to recognise the :vd symbol that indicates line-to-line voltages.
-:vd are currently not natively supported in the PowerModelsDistributionStateEstimation package
+Variation of the namesake PowerModelsDistributionStateEstimation variable, that allows to recognise the :vd 
+symbol that indicates line-to-line voltages. :vd are currently not natively supported in the PowerModelsDistributionStateEstimation package
 """
 function variable_mc_measurement(pm::_PMD.AbstractUnbalancedPowerModel; nw::Int=_PMD.nw_id_default, bounded::Bool=false)
     for i in _PMD.ids(pm, nw, :meas)
