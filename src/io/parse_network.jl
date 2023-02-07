@@ -106,17 +106,3 @@ function model_generators_as_loads!(math::Dict)
         end
     end
 end
-"""
-Assigns active and reactive power bounds to the mathematical dictionary `math`,
-to all loads (except those loads that are actually generators).
-"""
-function assign_power_rating_based_bounds!(math::Dict)
-    for (_, load) in math["load"]
-        if load["name"] ∉ ["ss13_1", "wt", "storage", "solar"] # exclude generators
-            load["pmin"] = -load["pd"]
-            load["pmax"] = load["pd"]
-            load["qmin"] = -0.3*load["pd"]
-            load["qmax"] = 0.3*load["pd"]
-        end
-    end
-end
