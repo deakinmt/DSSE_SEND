@@ -47,3 +47,48 @@ function assign_power_rating_based_bounds!(data::Dict)
         end
     end
 end
+"""
+Retrieves loading data of substations, in kW. #TODO --> remove imaginary part altogether and get rid of `complex?`
+"""
+function get_max_ss_loads(;complex=false)
+    dict = complex ?
+        Dict(
+            "ss11" => 300+0j,
+            "ss15" => 300+0j,
+            "ss16" => 200+0j,
+            "ss25" => 800+0j,
+            "ss26" => 400+0j,
+            "ss12" => 114+0j,
+            "ss22" => 114+0j,
+            "t07"  => 800+0j,
+            "t08"  => 400+0j,
+            "ss03" => 230+0j,
+            "ss04" => 225+0j,
+            "ss05" => 150+0j,
+            "ss06" => 175+0j,
+            "ss08" => 162+0j,
+            "ss21" => 826+0j,
+            "ss23" => 392+0j,
+            "ss24" => 829+0j,
+        ) :
+        Dict(
+            "ss11" => 300.,
+            "ss15" => 300.,
+            "ss16" => 200.,
+            "ss25" => 800.,
+            "ss26" => 400.,
+            "ss12" => 114.,
+            "ss22" => 114.,
+            "t07"  => 800.,
+            "t08"  => 400.,
+            "ss03" => 230.,
+            "ss04" => 225.,
+            "ss05" => 150.,
+            "ss06" => 175.,
+            "ss08" => 162.,
+            "ss21" => 826.,
+            "ss23" => 392.,
+            "ss24" => 829.,
+        ) 
+    return dict
+end
