@@ -17,11 +17,13 @@ function plot_residuals_single_ts(df::DataFrames.DataFrame, ts::Dates.DateTime; 
     plot!(xrotation=-45, xticks = (1:1:length(x_ids), x_ids), ylabel="Voltage residuals [p.u.]")
 
     if report_details
-        plot!(title="Aggr. $aggr"*", ts: $ts, Taps: $taps") #title can be easily cropped out
+        plot!(title="Aggr. $aggr"*", ts: $ts, Taps: $taps") #title can be easily cropped out in LaTeX eventually
     end
 
     return p
 end
+
+#savefig("residuals_off_taps_example.pdf")
 
 function plot_residuals_multi_ts(df::DataFrames.DataFrame, trange::Dates.StepRange; aggr::String="",taps::String="", report_details::Bool=false)
 
