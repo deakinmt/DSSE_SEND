@@ -23,7 +23,7 @@ include("io/viz_data.jl")
 include("io/viz_results.jl")
 
 include("dsse/constraint.jl")
-include("dsse/dsse_with_transfos.jl")
+include("dsse/dsse.jl")
 include("dsse/variable.jl")
 
 end

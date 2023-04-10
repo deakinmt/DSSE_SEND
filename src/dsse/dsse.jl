@@ -54,6 +54,9 @@ function build_mc_send_dsse(pm::_PMD.AbstractUnbalancedPowerModel)
         _PMD.constraint_mc_theta_ref(pm, i)
     end
     for (i,bus) in _PMD.ref(pm, :bus)
+        constraint_vr_vi_squaresum(pm, i)
+    end
+    for (i,bus) in _PMD.ref(pm, :bus)
         _PMDSE.constraint_mc_power_balance_se(pm, i)
         bus_with_vd_meas = [meas["cmp_id"] for (i, meas) in _PMD.ref(pm, 0, :meas) if meas["var"] == :vd]
         if i ∈ bus_with_vd_meas
