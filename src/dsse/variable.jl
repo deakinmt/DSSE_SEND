@@ -28,6 +28,60 @@ function variable_line_to_line_voltage_magnitude(pm::_PMD.AbstractUnbalancedPowe
     end
 end
 """
+Creates auxiliary variables for total three-phase power.
+    Works with both loads and generators.
+These are currently not present by default in PowerModelsDistributionStateEstimation (v0.6.x)
+"""
+function variable_total_threephase_power_active(pm::_PMD.AbstractUnbalancedPowerModel; nw::Int=_PMD.nw_id_default, bounded::Bool=false)
+    
+    cmp_with_stot = [meas["cmp_id"] for (i, meas) in _PMD.ref(pm, nw, :meas) if meas["var"] ∈ [:pdt, :pgt]]
+
+    name = string(meas["var"])[1:2] #to apply the same to generators and loads
+    cmp = name == "pg" ? :gen : :load
+    pt = _PMD.var(pm, nw)[meas["var"]] = Dict(i => JuMP.@variable(pm.model,
+            base_name="$(nw)_$(string(meas["var"]))_$(i)"
+        ) for i in _PMD.ids(pm, nw, cmp) if i ∈ cmp_with_stot
+    )
+
+    if bounded
+        for (i,cm) in _PMD.ref(pm, nw, cmp) 
+            if i ∈ cmp_with_stot
+                if haskey(cm, "ptmin")
+                    JuMP.set_lower_bound(pt[i], cm["ptmin"][idx])
+                end
+                if haskey(cm, "ptmax")
+                    JuMP.set_upper_bound(pt[i], cm["ptmax"][idx])
+                end
+            end
+        end
+    end
+end
+
+function variable_total_threephase_power_reactive(pm::_PMD.AbstractUnbalancedPowerModel; nw::Int=_PMD.nw_id_default, bounded::Bool=false)
+    
+    cmp_with_stot = [meas["cmp_id"] for (i, meas) in _PMD.ref(pm, nw, :meas) if meas["var"] ∈ [:qdt, :qgt]]
+
+    name = string(meas["var"])[1:2] #to apply the same to generators and loads
+    cmp = name == "pg" ? :gen : :load
+    qt = _PMD.var(pm, nw)[meas["var"]] = Dict(i => JuMP.@variable(pm.model,
+        base_name="$(nw)_$(string(meas["var"]))_$(i)"
+        ) for i in _PMD.ids(pm, nw, cmp) if i ∈ cmp_with_stot
+    )
+
+    if bounded
+        for (i,cm) in _PMD.ref(pm, nw, cmp) 
+            if i ∈ cmp_with_stot
+                if haskey(cm, "qtmin")
+                    JuMP.set_lower_bound(qt[i], cm["qtmin"][idx])
+                end
+                if haskey(cm, "qtmax")
+                    JuMP.set_upper_bound(qt[i], cm["qtmax"][idx])
+                end
+            end
+        end
+    end
+end
+"""
 Variation of the namesake PowerModelsDistributionStateEstimation variable, that allows to recognise the :vd 
 symbol that indicates line-to-line voltages. :vd are currently not natively supported in the PowerModelsDistributionStateEstimation package
 """
@@ -39,6 +93,8 @@ function variable_mc_measurement(pm::_PMD.AbstractUnbalancedPowerModel; nw::Int=
         connections = _PMDSE.get_active_connections(pm, nw, cmp_type, cmp_id)
         if msr_var == :vd                                      # <- original to DSSE_SEND package 
             constraint_line_to_line_voltage(pm, cmp_id, nw=nw) # <- original to DSSE_SEND package
+        elseif msr_var ∈ [:pdt, :qdt, :pgt, :qgt]
+            constraint_total_power(pm, cmp_id, msr_var, nw=nw)
         else
             if _PMDSE.no_conversion_needed(pm, msr_var)
                 #no additional variable is created, it is already by default in the formulation
