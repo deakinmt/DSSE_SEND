@@ -41,7 +41,6 @@ function build_mc_send_dsse(pm::_PMD.AbstractUnbalancedPowerModel)
     _PMD.variable_mc_transformer_power(pm; bounded = false, report=false)
     _PMD.variable_mc_generator_power(pm; bounded = false)
     _PMDSE.variable_mc_load(pm; report = true)
-    _PMD.variable_mc_transformer_power(pm; bounded=false)
     _PMDSE.variable_mc_residual(pm; bounded = true)
     _DS.variable_mc_measurement(pm; bounded = false)
 
