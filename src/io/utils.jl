@@ -25,7 +25,7 @@ function post_process_dsse_solution!(sol::Dict)::Nothing
     for (_,bus) in sol["solution"]["bus"]
         vi = bus["vi"]
         vr = bus["vr"]
-        bus["vm"] = vi.^2+vr.^2
+        bus["vm"] = sqrt.(vi.^2+vr.^2)
         bus["vd"] = [sqrt(vr[2]^2+vr[1]^2-2*vr[1]*vr[2]+vi[2]^2+vi[1]^2-2*vi[1]*vi[2]), sqrt(vr[2]^2+vr[3]^2-2*vr[3]*vr[2]+vi[2]^2+vi[3]^2-2*vi[3]*vi[2]), sqrt(vr[1]^2+vr[3]^2-2*vr[3]*vr[1]+vi[1]^2+vi[3]^2-2*vi[3]*vi[1])]
         bus["va"] = atan.(vi, vr)
     end
