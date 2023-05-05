@@ -65,7 +65,7 @@ function constraint_total_power(pm::_PMD.AbstractUnbalancedIVRModel, i::Int, s::
 
 end
 """
-
+Bounds the (square) voltage magnitude when rectangular voltage variables are used 
 """
 function constraint_vr_vi_squaresum(pm::Union{_PMD.AbstractUnbalancedACRModel, _PMD.AbstractUnbalancedIVRModel}, i::Int; nw::Int=_PMD.nw_id_default)::Nothing
 
