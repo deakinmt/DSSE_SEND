@@ -13,8 +13,6 @@ import StatsPlots
 const _DS = DSSE_SEND
 const BASE_DIR = dirname(@__DIR__)
 
-include("core/run_dsse_multiple_ts.jl")
-
 include("io/parse_measurements.jl")
 include("io/parse_network.jl")
 include("io/plot_network_graph.jl")
