@@ -16,6 +16,7 @@ function strng2cmpx(s::String)
         spl = split(s, "-")
         re = parse(Float64, spl[2])
         img = parse(Float64, spl[3][1:end-2])
+        return -re-img*im
     else # 1 minus sign
         spl = split(s, "+")
         if length(spl) == 2
@@ -37,6 +38,33 @@ function get_vm_df(volts::_DF.DataFrame)
         push!(v_vm, vcat(row.IsoDatetime, vm))
     end
     return v_vm
+end
+
+function get_va_in_rads(volts::_DF.DataFrame)
+    va_r = DataFrames.DataFrame([name => [] for name in names(volts)])
+    for row in eachrow(volts)
+        n = [strng2cmpx(row[c]) for c in 2:length(row)]
+        va = [atan(imag(j),real(j)) for j in n]
+        push!(va_r, vcat(row.IsoDatetime, va))
+    end
+    return va_r
+end
+
+function get_vd_in_pus(vm_pu::_DF.DataFrame, va::_DF.DataFrame)
+    vd_r = DataFrames.DataFrame([name => [] for name in names(va)])
+    for idx in 1:size(va)[1]
+        varow = va[idx,:]
+        vmrow = vm_pu[idx,:]
+        vd = []
+        for col in 2:3:length(vmrow)
+            vd1 = sqrt(vmrow[col]^2+vmrow[col+1]^2-2*vmrow[col+1]*vmrow[col]*cos(varow[col+1]-varow[col]))
+            vd2 = sqrt(vmrow[col+2]^2+vmrow[col+1]^2-2*vmrow[col+1]*vmrow[col+2]*cos(varow[col+1]-varow[col+2]))
+            vd3 = sqrt(vmrow[col]^2+vmrow[col+2]^2-2*vmrow[col+2]*vmrow[col]*cos(varow[col+2]-varow[col]))
+            push!(vd, [vd1,vd2,vd3])
+        end
+        push!(vd_r, vcat(va.IsoDatetime[idx], vd...))
+    end
+    return vd_r
 end
 
 function get_bus_vbase(ntw::Dict, v_vm::_DF.DataFrame)
@@ -61,7 +89,9 @@ function get_vm_in_pu(v_pu::_DF.DataFrame, v_vm::_DF.DataFrame)
     return vm_pu
 end
 
-function add_measurements_se_day_old_ntw!(ntw::Dict, max_err::Float64, row_idx::Int, p_load::_DF.DataFrame, q_load::_DF.DataFrame, p_gen::_DF.DataFrame, q_gen::_DF.DataFrame, volts::_DF.DataFrame)
+
+function add_measurements_se_day!(options::Dict, ntw::Dict, max_err::Float64, row_idx::Int, p_load::_DF.DataFrame, q_load::_DF.DataFrame, p_gen::_DF.DataFrame, q_gen::_DF.DataFrame, volts::_DF.DataFrame)
+  
     if haskey(ntw, "meas") empty!(ntw["meas"]) end
     pds = p_load[row_idx, :] 
     qds = q_load[row_idx, :] 
@@ -75,10 +105,14 @@ function add_measurements_se_day_old_ntw!(ntw::Dict, max_err::Float64, row_idx::
     genbuses = unique([gen["gen_bus"] for (_, gen) in ntw["gen"]])
 
     for c in 2:3:175
+        
+        if options["voltage"] == "line" @assert volts[1,2] > 1.1 "You want vd but are giving vm as input in `volts`" end 
+        v_sym = options["voltage"] == "line" ? :vd : :vm
+
         m_idx = isempty(ntw["meas"]) ? 1 : maximum(parse.(Int, collect(keys(ntw["meas"]))))+1
         name = lowercase(names(vs)[c])[1:end-2]
         for (_,bus) in ntw["bus"]
-            if bus["name"] == name && bus["index"] ∈ vcat(loadbuses, genbuses)              
+            if bus["name"] == name && bus["index"] ∈ vcat(loadbuses, genbuses) && (options["full_meas_set"] || name ∈ actually_measured_devices())             
                 μ = abs.(strng2cmpx.([vs[c], vs[c+1], vs[c+2]]))./(bus["vbase"]*1000)
                 σ = 0.002
                 μ_err = []
@@ -86,74 +120,87 @@ function add_measurements_se_day_old_ntw!(ntw::Dict, max_err::Float64, row_idx::
                     push!(μ_err, _DST.rand(_DST.Normal(μ_i, σ)))
                 end 
                 dst = [_DST.Normal(μ_err[1], σ), _DST.Normal(μ_err[2], σ), _DST.Normal(μ_err[3], σ)]
-                # dst = [_DST.Normal(μ[1], σ), _DST.Normal(μ[2], σ), _DST.Normal(μ[3], σ)]
-                ntw["meas"]["$m_idx"] = Dict("var"=>:vm, "cmp"=>:bus, "cmp_id"=>bus["index"], "dst"=>dst, "name"=>name, "crit"=>"rwlav")
+                
+                ntw["meas"]["$m_idx"] = Dict("var"=>v_sym, "cmp"=>:bus, "cmp_id"=>bus["index"], "dst"=>dst, "name"=>name, "crit"=>"rwlav")
             end
         end
     end
 
+    p_sym = options["power"] == "per_phase" ? :pd : :pdt  
+    q_sym = options["power"] == "per_phase" ? :qd : :qdt  
+
     for c in 2:3:82
         name = names(pds)[c][1:end-2]
+
         for (_,load) in ntw["load"]
-            if load["name"] == name  
-                # add ps!
-                m_idx = isempty(ntw["meas"]) ? 1 : maximum(parse.(Int, collect(keys(ntw["meas"]))))+1   
-                        
-                μ = [pds[c], pds[c+1], pds[c+2]]./(ntw["settings"]["sbase"]*1000)
-                
-                for i in 1:length(μ)
-                    if isnan(μ[i])
-                        μ[i] = 0.
+            if load["name"] == name && (options["full_meas_set"] || name ∈ actually_measured_devices())
+                for (p, qty) in zip([pds, qds], [p_sym, q_sym])
+
+                    ############################
+                    ##### ADD P MEASUREMENTS
+                    ############################
+                    m_idx = isempty(ntw["meas"]) ? 1 : maximum(parse.(Int, collect(keys(ntw["meas"]))))+1   
+                    
+                    if options["power"] == "per_phase"
+                        μ = [p[c], p[c+1], p[c+2]]./(ntw["settings"]["sbase"]*1000)
+                    else
+                        μ = [sum([p[c], p[c+1], p[c+2]])]./(ntw["settings"]["sbase"]*1000)
                     end
+
+                    σ = max_err/3*_DST.mean(μ) == 0 ? max_err/3*_DST.mean(μ) : 1e-5 #TODO change error definition?
+                    
+                    μ_err = []
+                    for μ_i ∈ μ push!(μ_err, _DST.rand(_DST.Normal(μ_i, σ))) end
+                    dst = [_DST.Normal(i, σ) for i in μ_err]
+                    
+                    ntw["meas"]["$m_idx"] = Dict("var"=>qty, "cmp"=>:load, "cmp_id"=>load["index"], "dst"=>dst, "name"=>name, "crit"=>"rwlav")
+
+                    # ############################
+                    # ##### ADD Q MEASUREMENTS
+                    # ############################
+                    # m_idx = isempty(ntw["meas"]) ? 1 : maximum(parse.(Int, collect(keys(ntw["meas"]))))+1  
+                    
+                    # qs = [qds[c], qds[c+1], qds[c+2]]
+                    # replace!(qs, NaN => 0.)
+                    
+                    # if options["power"] == "per_phase"
+                    #     μ = qs./(ntw["settings"]["sbase"]*1000)
+                    # else
+                    #     μ = [sum(qs)]./(ntw["settings"]["sbase"]*1000)
+                    # end
+
+                    # σ = max_err/3*_DST.mean(μ) == 0 ? max_err/3*_DST.mean(μ) : 1e-5 #TODO change error definition?
+
+                    # μ_err = []
+                    # for μ_i ∈ μ push!(μ_err, _DST.rand(_DST.Normal(μ_i, σ))) end 
+                    # dst = [_DST.Normal(μ_err[1], σ), _DST.Normal(μ_err[2], σ), _DST.Normal(μ_err[3], σ)]
+
+                    # ntw["meas"]["$m_idx"] = Dict("var"=>q_sym, "cmp"=>:load, "cmp_id"=>load["index"], "dst"=>dst, "name"=>name, "crit"=>"rwlav")
                 end
-
-                σ = max_err/3*_DST.mean(μ) == 0 ? max_err/3*_DST.mean(μ) : 1e-5 #TODO change error definition?
-                μ_err = []
-                for μ_i ∈ μ
-                    push!(μ_err, _DST.rand(_DST.Normal(μ_i, σ)))
-                end 
-                # dst = [_DST.Normal(μ_err[1], σ), _DST.Normal(μ_err[2], σ), _DST.Normal(μ_err[3], σ)]
-                dst = [_DST.Normal(μ[1], σ), _DST.Normal(μ[2], σ), _DST.Normal(μ[3], σ)]
-                ntw["meas"]["$m_idx"] = Dict("var"=>:pd, "cmp"=>:load, "cmp_id"=>load["index"], "dst"=>dst, "name"=>name, "crit"=>"rwlav")
-
-                # add qs!
-                m_idx = isempty(ntw["meas"]) ? 1 : maximum(parse.(Int, collect(keys(ntw["meas"]))))+1   
-                        
-                μ = [qds[c], qds[c+1], qds[c+2]]./(ntw["settings"]["sbase"]*1000)
-                
-                for i in 1:length(μ)
-                    if isnan(μ[i])
-                        μ[i] = 0.
-                    end
-                end
-
-                σ = max_err/3*_DST.mean(μ) == 0 ? max_err/3*_DST.mean(μ) : 1e-5 #TODO change error definition?
-                μ_err = []
-                for μ_i ∈ μ
-                    push!(μ_err, _DST.rand(_DST.Normal(μ_i, σ)))
-                end 
-                dst = [_DST.Normal(μ_err[1], σ), _DST.Normal(μ_err[2], σ), _DST.Normal(μ_err[3], σ)]
-                # dst = [_DST.Normal(μ[1], σ), _DST.Normal(μ[2], σ), _DST.Normal(μ[3], σ)]
-                ntw["meas"]["$m_idx"] = Dict("var"=>:qd, "cmp"=>:load, "cmp_id"=>load["index"], "dst"=>dst, "name"=>name, "crit"=>"rwlav")
-
             end
         end
     end
 
     for c in 2:4
         name = names(pgs)[c]
-        for (_,load) in ntw["load"] # remember you are passing loads as generators
+        for (_,load) in ntw["load"] # remember you are passing generators as loads
             if load["name"] == name  
-                for (p, qty) in zip([pgs, qgs], [:pd, :qd])
-                    m_idx = isempty(ntw["meas"]) ? 1 : maximum(parse.(Int, collect(keys(ntw["meas"]))))+1            
-                    μ = fill(-p[c]/3, 3)./(ntw["settings"]["sbase"]) # times 1000 because gen is measured in kW/kVAr
+                for (p, qty) in zip([pgs, qgs], [p_sym, q_sym])
+                    
+                    m_idx = isempty(ntw["meas"]) ? 1 : maximum(parse.(Int, collect(keys(ntw["meas"]))))+1        
+                    
+                    if options["power"] == "per_phase"
+                        μ = fill(-p[c]/3, 3)./(ntw["settings"]["sbase"]) # not divided by 1000 because gen is measured in kW/kVAr
+                    else
+                        μ = [-sum(p)]./(ntw["settings"]["sbase"])
+                    end
+                    
                     σ = max_err/3*_DST.mean(μ) == 0 ? max_err/3*_DST.mean(μ) : 1e-5 #TODO change error definition?
+                    
                     μ_err = []
-                    for μ_i ∈ μ
-                        push!(μ_err, _DST.rand(_DST.Normal(μ_i, σ)))
-                    end 
-                    dst = [_DST.Normal(μ_err[1], σ), _DST.Normal(μ_err[2], σ), _DST.Normal(μ_err[3], σ)]
-                    # no error: dst = [_DST.Normal(μ[1], σ), _DST.Normal(μ[2], σ), _DST.Normal(μ[3], σ)]
+                    for μ_i ∈ μ push!(μ_err, _DST.rand(_DST.Normal(μ_i, σ))) end 
+                    dst = [_DST.Normal(i, σ) for i in μ_err]
+
                     ntw["meas"]["$m_idx"] = Dict("var"=>qty, "cmp"=>:load, "cmp_id"=>load["index"], "dst"=>dst, "name"=>name, "crit"=>"rwlav")
                 end
             end
@@ -161,17 +208,14 @@ function add_measurements_se_day_old_ntw!(ntw::Dict, max_err::Float64, row_idx::
     end
 end
 
-function aggregate_phase_meas!(ntw::Dict)
-
-end
-
-function vm2vd!(ntw::Dict)
-    
-end
-
-function remove_synthetic_meas!(ntw::Dict)
-    
-end
+# function aggregate_power_meas!(ntw::Dict)
+#     for (m,meas) in ntw["meas"]
+#         if meas["cmp"] ∈ [:load, :gen]
+#             meas["var"] = Symbol(string(meas["var"])*"t")
+#             meas["dst"] = _DST.Normal(sum(_DST.mean.(meas["dst"])), _DST.std(meas["dst"][1]))
+#         end
+#     end
+# end
 
 function plot_pf_vs_se(vm_pf_pu, se_pu; pick_phase = 1, plt_type = "diff")
     if plt_type == "diff"
@@ -184,4 +228,32 @@ function plot_pf_vs_se(vm_pf_pu, se_pu; pick_phase = 1, plt_type = "diff")
         p
     end
 
+end
+
+function actually_measured_devices()
+    return ["solar",
+            "ss02",
+            "ss03",
+            "ss04",
+            "ss05",
+            "ss11",
+            "ss12",
+            "ss13_1",
+            "ss13_2",
+            "ss14",
+            "ss15",
+            "ss16",
+            "ss17",
+            "ss18",
+            "ss19",
+            "ss21",
+            "ss24",
+            "ss25",
+            "ss29",
+            "ss30",
+            "storage",
+            "t01",
+            "t02",
+            "wt"
+        ]    
 end
