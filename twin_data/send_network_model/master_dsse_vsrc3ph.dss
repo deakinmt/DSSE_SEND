@@ -3,7 +3,11 @@ Set DefaultBaseFrequency=50  ! for European system
 new circuit.send_network
 
 ! Source voltage changed to that the daytime voltage at sub11 matches MPN
-Edit Vsource.Source basekV=11 pu=1.00 R1=0.000001 X1=0.000001 R0=0.000001 X0=0.000001
+!Edit Vsource.Source basekV=11 pu=1.00 R1=0.000001 X1=0.000001 R0=0.000001 X0=0.000001
+edit Vsource.Source bus1=sourcebus.1 basekV=6.3508529610858835 pu=1.00 angle=0 phases=1 R1=0.000001 X1=0.000001 R0=0.000001 X0=0.000001
+new Vsource.Source_a  bus1=sourcebus.2 basekV=6.3508529610858835 pu=1.00 angle=120 phases=1 R1=0.000001 X1=0.000001 R0=0.000001 X0=0.000001
+new Vsource.Source_b bus1=sourcebus.3 basekV=6.3508529610858835 pu=1.00 angle=-120 phases=1 R1=0.000001 X1=0.000001 R0=0.000001 X0=0.000001
+
 
 ! Add short line to SS13_1, the DSSE voltage source [I couldn't find a tidy way to do this otherwise]
 redirect linecodes.dss
