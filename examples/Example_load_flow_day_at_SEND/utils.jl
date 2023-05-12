@@ -89,6 +89,17 @@ function get_vm_in_pu(v_pu::_DF.DataFrame, v_vm::_DF.DataFrame)
     return vm_pu
 end
 
+function add_source_volt_meas!(ntw, σ, vs, v_sym) 
+    μ = abs.(strng2cmpx.([vs[2], vs[3], vs[4]]))./(ntw["bus"]["135"]["vbase"]*1000)
+    μ_err = []
+    for μ_i ∈ μ
+        push!(μ_err, _DST.rand(_DST.Normal(μ_i, σ)))
+    end 
+    dst = [_DST.Normal(μ_err[1], σ), _DST.Normal(μ_err[2], σ), _DST.Normal(μ_err[3], σ)]
+    m = maximum(parse.(Int, collect(keys(ntw["meas"]))))+1
+    ntw["meas"]["$m"] = Dict("var"=>v_sym, "cmp"=>:bus, "cmp_id"=>135, "dst"=>dst, "name"=>"SOURCEBUS", "crit"=>"rwlav")
+end
+
 
 function add_measurements_se_day!(options::Dict, ntw::Dict, max_err::Float64, row_idx::Int, p_load::_DF.DataFrame, q_load::_DF.DataFrame, p_gen::_DF.DataFrame, q_gen::_DF.DataFrame, volts::_DF.DataFrame)
   
@@ -105,8 +116,7 @@ function add_measurements_se_day!(options::Dict, ntw::Dict, max_err::Float64, ro
     genbuses = unique([gen["gen_bus"] for (_, gen) in ntw["gen"]])
 
     for c in 2:3:175
-        
-        if options["voltage"] == "line" @assert volts[1,2] > 1.1 "You want vd but are giving vm as input in `volts`" end 
+        if options["voltage"] == "line" @assert abs(strng2cmpx(volts[1,2])) > 1.1 "You want vd but are giving vm as input in `volts`" end 
         v_sym = options["voltage"] == "line" ? :vd : :vm
 
         m_idx = isempty(ntw["meas"]) ? 1 : maximum(parse.(Int, collect(keys(ntw["meas"]))))+1
@@ -125,6 +135,10 @@ function add_measurements_se_day!(options::Dict, ntw::Dict, max_err::Float64, ro
             end
         end
     end
+
+    σ = 0.002
+    v_sym = options["voltage"] == "line" ? :vd : :vm
+    add_source_volt_meas!(ntw, σ, vs, v_sym)
 
     p_sym = options["power"] == "per_phase" ? :pd : :pdt  
     q_sym = options["power"] == "per_phase" ? :qd : :qdt  
@@ -155,27 +169,6 @@ function add_measurements_se_day!(options::Dict, ntw::Dict, max_err::Float64, ro
                     
                     ntw["meas"]["$m_idx"] = Dict("var"=>qty, "cmp"=>:load, "cmp_id"=>load["index"], "dst"=>dst, "name"=>name, "crit"=>"rwlav")
 
-                    # ############################
-                    # ##### ADD Q MEASUREMENTS
-                    # ############################
-                    # m_idx = isempty(ntw["meas"]) ? 1 : maximum(parse.(Int, collect(keys(ntw["meas"]))))+1  
-                    
-                    # qs = [qds[c], qds[c+1], qds[c+2]]
-                    # replace!(qs, NaN => 0.)
-                    
-                    # if options["power"] == "per_phase"
-                    #     μ = qs./(ntw["settings"]["sbase"]*1000)
-                    # else
-                    #     μ = [sum(qs)]./(ntw["settings"]["sbase"]*1000)
-                    # end
-
-                    # σ = max_err/3*_DST.mean(μ) == 0 ? max_err/3*_DST.mean(μ) : 1e-5 #TODO change error definition?
-
-                    # μ_err = []
-                    # for μ_i ∈ μ push!(μ_err, _DST.rand(_DST.Normal(μ_i, σ))) end 
-                    # dst = [_DST.Normal(μ_err[1], σ), _DST.Normal(μ_err[2], σ), _DST.Normal(μ_err[3], σ)]
-
-                    # ntw["meas"]["$m_idx"] = Dict("var"=>q_sym, "cmp"=>:load, "cmp_id"=>load["index"], "dst"=>dst, "name"=>name, "crit"=>"rwlav")
                 end
             end
         end
@@ -186,13 +179,12 @@ function add_measurements_se_day!(options::Dict, ntw::Dict, max_err::Float64, ro
         for (_,load) in ntw["load"] # remember you are passing generators as loads
             if load["name"] == name  
                 for (p, qty) in zip([pgs, qgs], [p_sym, q_sym])
-                    
                     m_idx = isempty(ntw["meas"]) ? 1 : maximum(parse.(Int, collect(keys(ntw["meas"]))))+1        
-                    
+
                     if options["power"] == "per_phase"
                         μ = fill(-p[c]/3, 3)./(ntw["settings"]["sbase"]) # not divided by 1000 because gen is measured in kW/kVAr
                     else
-                        μ = [-sum(p)]./(ntw["settings"]["sbase"])
+                        μ = [-sum(p[c])]./(ntw["settings"]["sbase"])
                     end
                     
                     σ = max_err/3*_DST.mean(μ) == 0 ? max_err/3*_DST.mean(μ) : 1e-5 #TODO change error definition?
@@ -208,18 +200,10 @@ function add_measurements_se_day!(options::Dict, ntw::Dict, max_err::Float64, ro
     end
 end
 
-# function aggregate_power_meas!(ntw::Dict)
-#     for (m,meas) in ntw["meas"]
-#         if meas["cmp"] ∈ [:load, :gen]
-#             meas["var"] = Symbol(string(meas["var"])*"t")
-#             meas["dst"] = _DST.Normal(sum(_DST.mean.(meas["dst"])), _DST.std(meas["dst"][1]))
-#         end
-#     end
-# end
-
 function plot_pf_vs_se(vm_pf_pu, se_pu; pick_phase = 1, plt_type = "diff")
     if plt_type == "diff"
-        diff_df = se_pu[:, (4+pick_phase):3:178].-vm_pf_pu[:, (1+pick_phase):3:175]
+        start_col = "solve_time" ∈ names(se_pu) ? 5 : 4
+        diff_df = se_pu[:, (start_col+pick_phase):3:178].-vm_pf_pu[:, (1+pick_phase):3:175]
         p = _SP.plot(title="Differences - phase $(pick_phase)")
         for i in eachcol(diff_df)
             _SP.boxplot!(i)
@@ -227,7 +211,6 @@ function plot_pf_vs_se(vm_pf_pu, se_pu; pick_phase = 1, plt_type = "diff")
         _SP.xticks!(1:1:58, names(diff_df), xrotation = -45, legend=false)
         p
     end
-
 end
 
 function actually_measured_devices()
