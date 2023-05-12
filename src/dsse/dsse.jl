@@ -42,6 +42,7 @@ function build_mc_send_dsse(pm::_PMD.AbstractUnbalancedPowerModel)
     _PMD.variable_mc_generator_power(pm; bounded = false)
     _PMDSE.variable_mc_load(pm; report = true)
     _PMDSE.variable_mc_residual(pm; bounded = true)
+    _DS.variable_aggregated_power(pm; bounded = false)
     _DS.variable_mc_measurement(pm; bounded = false)
 
     # Constraints
@@ -67,7 +68,7 @@ function build_mc_send_dsse(pm::_PMD.AbstractUnbalancedPowerModel)
         _PMD.constraint_mc_ohms_yt_to(pm,i)
     end
     for (i, meas) in _PMD.ref(pm, :meas)
-        _PMDSE.constraint_mc_residual(pm, i)
+        _DS.constraint_mc_residual(pm, i)
     end
 
     for i in _PMD.ids(pm, :transformer)
