@@ -1,8 +1,3 @@
-"solves the AC state estimation in polar coordinates (ACP formulation)"
-function solve_acp_mc_se(data::Union{Dict{String,<:Any},String}, solver; kwargs...)
-    return solve_mc_se(data, _PMD.ACPUPowerModel, solver; kwargs...)
-end
-
 "solves the AC state estimation in rectangular coordinates (ACR formulation)"
 function solve_acr_mc_se(data::Union{Dict{String,<:Any},String}, solver; kwargs...)
     return solve_mc_se(data, _PMD.ACRUPowerModel, solver; kwargs...)

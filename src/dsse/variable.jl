@@ -27,17 +27,16 @@ function variable_line_to_line_voltage_magnitude(pm::_PMD.AbstractUnbalancedPowe
         end
     end
 end
-
-function variable_aggregated_power(pm::_PMD.AbstractUnbalancedPowerModel; nw::Int=_PMD.nw_id_default, bounded::Bool=false)
-    variable_total_threephase_power_active(pm, nw=nw, bounded=bounded)
-    variable_total_threephase_power_reactive(pm, nw=nw, bounded=bounded)
-end
-
 """
 Creates auxiliary variables for total three-phase power.
     Works with both loads and generators.
 These are currently not present by default in PowerModelsDistributionStateEstimation (v0.6.x)
 """
+function variable_aggregated_power(pm::_PMD.AbstractUnbalancedPowerModel; nw::Int=_PMD.nw_id_default, bounded::Bool=false)
+    variable_total_threephase_power_active(pm, nw=nw, bounded=bounded)
+    variable_total_threephase_power_reactive(pm, nw=nw, bounded=bounded)
+end
+
 function variable_total_threephase_power_active(pm::_PMD.AbstractUnbalancedPowerModel; nw::Int=_PMD.nw_id_default, bounded::Bool=false)
     # note, this is just an auxiliary variable, doesn't need to go into the power balance because there is an equality constraint for that.
     cmp_with_pgtot = [meas["cmp_id"] for (i, meas) in _PMD.ref(pm, nw, :meas) if meas["var"] == :pgt]
