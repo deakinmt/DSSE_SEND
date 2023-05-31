@@ -18,13 +18,13 @@ IMPORTANT NOTES: 1) by default, only P,Q and |U| measurements are added. Current
     - exclude:     allows the user to NOT create measurements for some loads/gens, e.g., "ss17". Might be useful if the measurements of a certain device 
                    are consistently corrupted. Or to explore under-determined scenarios, etc.
     - add_ss13:    if `true` (default), measurements for the voltage source are added, else these are ignored
-"""
-function add_measurements!(timestep::Dates.DateTime, data::Dict, aggregation::Dates.TimePeriod; exclude::Vector{String}=String[], add_ss13::Bool=true)::Nothing
+""" 
+function add_measurements!(timestep::Dates.DateTime, data::Dict, aggregation::Dates.TimePeriod; exclude::Vector{String}=String[], add_ss13::Bool=true, aggregate_power::Bool=false)::Nothing
     day = Dates.Day(timestep).value
     month = Dates.Month(timestep).value
     file = joinpath(_DS.BASE_DIR, "twin_data/telemetry/2022_$(month)_$(day)/all_measurements_$(month)_$(day).csv")
     ts_df = create_measurement_df(file, timestep, aggregation; exclude=exclude)
-    add_measurements_from_df!(data, ts_df)
+    add_measurements_from_df!(data, ts_df, aggregate_power=aggregate_power)
     if add_ss13 _DS.add_ss13_meas!(file, timestep, data, aggregation) end
     nothing
 end
@@ -118,21 +118,31 @@ Given a single time steps's measurement dataframe `ts_df` (which can be the aver
 these measurements are added to the network dictionary `data` according to the format defined in PowerModelsDistributionStateEstimation.
 The subdivision of aggregated power measurements per phase is that defined in the paper.
 """
-function add_measurements_from_df!(data::Dict, ts_df::DataFrames.DataFrame)
+function add_measurements_from_df!(data::Dict, ts_df::DataFrames.DataFrame; aggregate_power::Bool=false)
     data["meas"] = Dict{String, Any}()
     m = 1
     for (_, load) in data["load"]
         meas = filter(x->x.Id .== load["name"], ts_df)
-        add_measurement!(data, load, meas, m, :pd)
-        add_measurement!(data, load, meas, m+1, :qd)
+        if aggregate_power
+            add_measurement!(data, load, meas, m, :pdt)
+            add_measurement!(data, load, meas, m+1, :qdt)
+        else
+            add_measurement!(data, load, meas, m, :pd)
+            add_measurement!(data, load, meas, m+1, :qd)
+        end
         add_measurement!(data, load, meas, m+2, :vd)
         m+=3
     end
     m = maximum(parse.(Int, collect(keys(data["meas"]))))+1
     for (_, gen) in data["gen"]
         meas = filter(x->x.Id .== gen["name"], ts_df)
-        add_measurement!(data, gen, meas, m, :pg)
-        add_measurement!(data, gen, meas, m+1, :qg)
+        if aggregate_power
+            add_measurement!(data, gen, meas, m, :pgt)
+            add_measurement!(data, gen, meas, m+1, :qgt)
+        else
+            add_measurement!(data, gen, meas, m, :pg)
+            add_measurement!(data, gen, meas, m+1, :qg)
+        end
         add_measurement!(data, gen, meas, m+2, :vd)
         m+=3
     end
@@ -148,9 +158,9 @@ Building block for function `add_measurements_from_df!`: adds an entry/measureme
 """
 function add_measurement!(data::Dict, d::Dict, meas::DataFrames.DataFrame, m::Int, var::Symbol)
     
-    cmp, cmp_id = if var ∈ [:pd, :qd]
+    cmp, cmp_id = if var ∈ [:pd, :qd, :pdt, :qdt]
             :load, d["index"] 
-          elseif var ∈ [:pg, :qg]
+          elseif var ∈ [:pg, :qg, :pgt, :qgt]
             :gen, d["index"]
           else
             :bus, haskey(d, "load_bus") ? d["load_bus"] : d["gen_bus"] 
@@ -183,20 +193,35 @@ function build_dst(meas::DataFrames.DataFrame, data::Dict, d::Dict, var::Symbol,
         if isnan(m2) m2 = 1e-7 end
         if isnan(m3) m3 = 1e-7 end
         if any(isnan.([m1,m2,m3])) @warn "measurement for bus $bus_id has NaN(s)!" end
+        if any(isnan.(σ)) σ = [1e-7, 1e-7, 1e-7] end
+        return [_DST.Normal(m1, σ[1]), _DST.Normal(m2, σ[2]), _DST.Normal(m3, σ[3])]
     elseif var ∈ [:pd, :qd, :pg, :qg]
         scale =  d["name"] ∈ ["solar", "storage", "wt", "_virtual_gen.voltage_source.source"] ? 1.0 : 1000 #except for those three, measurements are in W, not in kW (probably)
         m1, m2, m3 = p_subdivision(meas[Symbol(String(var)[1])][1], meas.v1[1], meas.v2[1], meas.v3[1], meas.i1[1], meas.i2[1], meas.i3[1])./(data["settings"]["sbase"]*scale)
         if reverse m1, m2, m3 = -m1,-m2,-m3 end
-        σ = measurement_error_model(meas, data, var, bus_id)
+        σ = abs.(measurement_error_model(meas, data, var, bus_id))
         if isnan(m1) m1 = 1e-7 end
         if isnan(m2) m2 = 1e-7 end
         if isnan(m3) m3 = 1e-7 end
         if any(isnan.([m1,m2,m3])) @warn "measurement for load $(d["index"]) has NaN(s)!" end
+        if any(isnan.(σ)) σ = [1e-7, 1e-7, 1e-7] end
+        return [_DST.Normal(m1, σ[1]), _DST.Normal(m2, σ[2]), _DST.Normal(m3, σ[3])]
+    elseif var ∈ [:pdt, :qdt, :pgt, :qgt]
+        scale =  d["name"] ∈ ["solar", "storage", "wt", "_virtual_gen.voltage_source.source"] ? 1.0 : 1000 #except for those three, measurements are in W, not in kW (probably)
+        σ = abs.(measurement_error_model(meas, data, var, bus_id))
+        if any(isnan.(σ)) σ = [1e-7] end
+        m = meas.p[1]/(data["settings"]["sbase"]*scale)
+        if isnan(m) 
+            m = 1e-7 
+            @warn "measurement for load $(d["index"]) is NaN!"
+        end
+        if reverse m = -m end
+        return [_DST.Normal(m, σ[1])]
     else
         @error "Measurement $var not recognized for $(meas.Id[1])"
     end
 
-    return [_DST.Normal(m1, σ[1]), _DST.Normal(m2, σ[2]), _DST.Normal(m3, σ[3])]
+    #return [_DST.Normal(m1, σ[1]), _DST.Normal(m2, σ[2]), _DST.Normal(m3, σ[3])]
 end
 """
     p_subdivision(pow::Real, v1::Real, v2::Real, v3::Real, i1::Real, i2::Real, i3::Real)::Tuple{Float64, Float64, Float64}
@@ -294,10 +319,11 @@ Given the measurement values, this function assigns the (per unit) σs of power 
 """
 function measurement_error_model(meas::DataFrames.DataFrame, data::Dict, var::Symbol, bus_id::Int)::Vector{Float64}
     if minimum([meas.i1[1], meas.i2[1], meas.i3[1]]) < 120
-        max_err = var ∈ [:pd, :pg] ? fill(0.01*120*(data["bus"]["$bus_id"]["vbase"]*1000)/1e5, 3) : fill(0.02*120*(data["bus"]["$bus_id"]["vbase"]*1000/1e5), 3)
+        max_err = var ∈ [:pd, :pg, :pdt, :pgt] ? fill(0.01*120*(data["bus"]["$bus_id"]["vbase"]*1000)/1e5, 3) : fill(0.02*120*(data["bus"]["$bus_id"]["vbase"]*1000/1e5), 3)
     else
-        max_err = var ∈ [:pd, :pg] ? [meas.i1[1], meas.i2[1], meas.i3[1]]*0.01*(data["bus"]["$bus_id"]["vbase"]*1000/1e5) : [meas.i1[1], meas.i2[1], meas.i3[1]]*0.02*(data["bus"]["$bus_id"]["vbase"]*1000/1e5)
+        max_err = var ∈ [:pd, :pg, :pdt, :pgt] ? [meas.i1[1], meas.i2[1], meas.i3[1]]*0.01*(data["bus"]["$bus_id"]["vbase"]*1000/1e5) : [meas.i1[1], meas.i2[1], meas.i3[1]]*0.02*(data["bus"]["$bus_id"]["vbase"]*1000/1e5)
     end
+    if max_err == 0. max_err = 1e-7 end
     return max_err./(3*data["settings"]["sbase"]) #σs in per unit
 end
 """
@@ -351,10 +377,19 @@ function add_ss13_2_meas!(file::String, timestep::Dates.DateTime, data::Dict, ag
     bus_id = [b for (b,bus) in data["bus"] if bus["name"] == "ss13_2"][1]
 
     m1, m2, m3 = (meas.v1[1], meas.v2[1], meas.v3[1])./(data["bus"][bus_id]["vbase"]*1000)
-    σ = abs(0.002/3*Statistics.mean([m1, m2, m3]))
+    σ = isnan(abs(0.002/3*Statistics.mean([m1, m2, m3]))) ? 0.02 : abs(0.002/3*Statistics.mean([m1, m2, m3]))
 
     data["meas"]["$(m+1)"] = Dict("var"=>:vd, "cmp" => :bus, "cmp_id"=>parse(Int, bus_id), 
                         "dst" => [_DST.Normal(m1, σ), _DST.Normal(m2, σ), _DST.Normal(m3, σ)],
                         "name" => "ss13_2"
                         )
+end
+
+function aggregate_source_gen_meas!(ntw)
+    for (m,meas) in ntw["meas"]
+        if meas["var"] ∈ [:pg, :qg] 
+            meas["var"] = Symbol(string(meas["var"])*"t")
+            meas["dst"] = [_DST.Normal(sum(_DST.mean.(meas["dst"])), _DST.std(meas["dst"][1]))]
+        end
+    end
 end
