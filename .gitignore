@@ -1,2 +1,4 @@
 /Manifest.toml
 /examples/Manifest.toml
+*.pdf
+*.png
