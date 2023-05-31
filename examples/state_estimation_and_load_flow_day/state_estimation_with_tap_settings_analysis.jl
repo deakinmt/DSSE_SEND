@@ -1,3 +1,15 @@
+##############################################################
+#
+# This script runs state estimation with the SEND measurements, 
+# for a case with far off tap settings vs one with corrected tap settings
+# Disaggregated power measurements are used (which is a bit of a hack, see the paper).
+# Residuals with and without corrected taps are reported for comparison.
+# 
+##############################################################
+
+import Pkg
+Pkg.activate("..") # use the environment in DSSE_SEND/examples
+
 import DSSE_SEND as _DS
 import Ipopt, Dates
 import PowerModelsDistribution as _PMD

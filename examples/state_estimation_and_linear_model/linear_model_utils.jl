@@ -1,3 +1,6 @@
+"""
+imports vectors and matrix for the linear model from the folder they are stored in.
+"""
 function get_Abvvpx()
     A = Matrix(CSV.read(joinpath(_DS.BASE_DIR, "twin_data/linear_send_network_model/mdl_A.csv"), header=0))
     b = Matrix(CSV.read(joinpath(_DS.BASE_DIR, "twin_data/linear_send_network_model/mdl_b.csv"), header=0))
@@ -16,7 +19,9 @@ function align_dsse_and_linear_model!(data::Dict)
     data["load"]["32"]["name"] = "ss01"
     data["load"]["32"]["source_id"] = "align_dsse_and_linear"
 end
-
+"""
+simple dictionary to map substation names to matrix indices
+"""
 function map_p_idx2loadid()
     return Dict(
         "T02" => "5",
@@ -95,9 +100,9 @@ Perturbs the loads by a certain percentage
 """
 perturb_powers(p::Vector{Float64}, perc::Float64) = p.*perc
 """
-Creates a timestep's x0 for the v = A*x0+b linear model, from the measurement CSV
+Creates a timestep's x0 for the v = A*x0+b linear model, from a real SEND measurement .csv file
 """
-function build_x0(p_idx::Matrix{String}, timestep::Dates.DateTime; power_partition::String="balanced")
+function build_x0_meas(p_idx::Matrix{String}, timestep::Dates.DateTime; power_partition::String="balanced")
     day = Dates.Day(timestep).value
     month = Dates.Month(timestep).value
     file = joinpath(_DS.BASE_DIR, "twin_data/telemetry/2022_$(month)_$(day)/all_measurements_$(month)_$(day).csv")
@@ -138,7 +143,70 @@ function build_x0(p_idx::Matrix{String}, timestep::Dates.DateTime; power_partiti
     end
     return replace(x0, NaN=>0)
 end
+"""
+Creates a timestep's x0 for the v = A*x0+b linear model, from synthetic power flow measurements
+"""
+function build_x0_synt(p_idx::Matrix{String}, rowidx::Int)
 
+    p_load = CSV.read(joinpath(_DS.BASE_DIR, "examples/state_estimation_and_load_flow_day/xmpl_load_flow_lds_W_p.csv"))[rowidx,:]
+    q_load = CSV.read(joinpath(_DS.BASE_DIR,"examples/state_estimation_and_load_flow_day/xmpl_load_flow_lds_VAr_q.csv"))[rowidx,:]
+    
+    p_gen = CSV.read(joinpath(_DS.BASE_DIR, "examples/state_estimation_and_load_flow_day//xmpl_load_flow_gen_kW_p.csv"))[rowidx,:]
+    q_gen = CSV.read(joinpath(_DS.BASE_DIR, "examples/state_estimation_and_load_flow_day//xmpl_load_flow_gen_kVAr_q.csv"))[rowidx,:] 
+
+    x0 = Matrix{Float64}(undef, length(p_idx)*2, 1)
+
+    for start_idx in [0, 96] # first 96/ indices are active power, rest is reactive
+        for i in 1:3:Int(length(x0)/2) 
+            idx = lowercase.(p_idx)[i]
+            cmp = occursin("_lv", idx) ? idx[1:end-5] : idx[1:end-2]
+            if cmp == "tx3"
+                p = p_gen.wt[1]*1e3       
+                q = q_gen.wt[1]*1e3              
+                PQ1, PQ2, PQ3 = start_idx == 0 ? fill(p/3,3) : fill(q/3,3)
+            elseif cmp == "tx5"
+                p = p_gen.storage[1]*1e3       
+                q = q_gen.storage[1]*1e3              
+                PQ1, PQ2, PQ3 = start_idx == 0 ? fill(p/3,3) : fill(q/3,3)
+            elseif cmp == "rmu2"
+                p = p_gen.solar[1]*1e3       
+                q = q_gen.solar[1]*1e3              
+                PQ1, PQ2, PQ3 = start_idx == 0 ? fill(p/3,3) : fill(q/3,3)
+            else
+                if start_idx == 0
+                    PQ1, PQ2, PQ3 = -p_load[cmp*"_a"], -p_load[cmp*"_b"], -p_load[cmp*"_c"]
+                else
+                    PQ1, PQ2, PQ3 = -q_load[cmp*"_a"], -q_load[cmp*"_b"], -q_load[cmp*"_c"]
+                end
+            end
+            x0[start_idx+i]   = PQ1
+            x0[start_idx+i+1] = PQ2
+            x0[start_idx+i+2] = PQ3
+        end
+    end
+    return x0 # return replace(x0, NaN=>0)
+end
+"""
+build the `b` vector for the linear model (for a single time step), starting from
+    the voltage results of state estimation calculations stored in a csv file `vm_res`.
+"""
+function build_b_from_se_results(vm_res, v_idx, v_base, rowidx)
+    v = vm_res[rowidx, 6:end]
+    b = [v["SOURCEBUS.1"][1], v["SOURCEBUS.2"][1], v["SOURCEBUS.3"][1]].*v_base[1]
+    for i in 4:3:length(v_idx)-2 # starts from idx 4 to skip voltage source
+        vidx = v_idx[i]
+        vb   = v_base[i] 
+        col = findfirst(item -> item == vidx, names(v))
+        push!(b, v[col][1]*vb)
+        push!(b, v[col+1][1]*vb)
+        push!(b, v[col+2][1]*vb)
+    end
+    return b
+end
+"""
+splits total power across the three phases.
+Only balanced option possible at the moments
+"""
 function subdivide_power(P::Float64, power_partition::String)
     if power_partition == "balanced"
         P1, P2, P3 = P/3, P/3, P/3
