@@ -42,17 +42,17 @@ function variable_total_threephase_power_active(pm::_PMD.AbstractUnbalancedPower
     # note, this is just an auxiliary variable, doesn't need to go into the power balance because there is an equality constraint for that.
     cmp_with_pgtot = [meas["cmp_id"] for (i, meas) in _PMD.ref(pm, nw, :meas) if meas["var"] == :pgt]
     cmp_with_pdtot = [meas["cmp_id"] for (i, meas) in _PMD.ref(pm, nw, :meas) if meas["var"] == :pdt]
-
+    
     pgt = _PMD.var(pm, nw)[:pgt] = Dict(i => JuMP.@variable(pm.model
         ,[t in 1:1]
         , base_name="$(nw)_pgt_$(i)"
-        ) for (i, meas) in _PMD.ref(pm, nw, :meas) if i ∈ cmp_with_pgtot
+        ) for (i, meas) in _PMD.ref(pm, nw, :gen) if i ∈ cmp_with_pgtot
     )
 
     pdt = _PMD.var(pm, nw)[:pdt] = Dict(i => JuMP.@variable(pm.model
         ,[t in 1:1]
         , base_name="$(nw)_pdt_$(i)"
-        ) for (i, meas) in _PMD.ref(pm, nw, :meas) if i ∈ cmp_with_pdtot
+        ) for (i, meas) in _PMD.ref(pm, nw, :load) if i ∈ cmp_with_pdtot
     )
 
     pt = merge(pgt, pdt)
@@ -79,13 +79,13 @@ function variable_total_threephase_power_reactive(pm::_PMD.AbstractUnbalancedPow
     qgt = _PMD.var(pm, nw)[:qgt] = Dict(i => JuMP.@variable(pm.model,
     [t in 1:1],
             base_name="$(nw)_qgt_$(i)"
-        ) for (i, meas) in _PMD.ref(pm, nw, :meas) if i ∈ cmp_with_qgtot
+        ) for (i, meas) in _PMD.ref(pm, nw, :gen) if i ∈ cmp_with_qgtot
     )
 
     qdt = _PMD.var(pm, nw)[:qdt] = Dict(i => JuMP.@variable(pm.model,
     [t in 1:1],
             base_name="$(nw)_qdt_$(i)"
-        ) for (i, meas) in _PMD.ref(pm, nw, :meas) if i ∈ cmp_with_qdtot
+        ) for (i, meas) in _PMD.ref(pm, nw, :load) if i ∈ cmp_with_qdtot
     )
 
     qt = merge(qgt, qdt)
