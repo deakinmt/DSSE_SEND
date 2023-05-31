@@ -1,5 +1,0 @@
-TODO - short term small tasks
-- remove transformers with no LV-side measurements
-- calculate PVUR?
-- discuss error quantification
-- discuss how to distribute the measurements per phase
