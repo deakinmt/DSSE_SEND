@@ -1,5 +1,5 @@
 """
-    add_measurements!(timestep::Dates.DateTime, data::Dict, aggregation::Dates.TimePeriod; exclude::Vector{String}=String[], add_ss13::Bool=true)
+    add_measurements!(timestep::Dates.DateTime, data::Dict, aggregation::Dates.TimePeriod; exclude::Vector{String}=String[], add_ss13::Bool=true, aggregate_power::Bool=false)
 
 Function that accesses the digital twin measurement file and adds the measurements to a PowerModelsDistribution dictionary (`data`) so that 
 it can be used to run a state estimation calculation.
@@ -18,6 +18,7 @@ IMPORTANT NOTES: 1) by default, only P,Q and |U| measurements are added. Current
     - exclude:     allows the user to NOT create measurements for some loads/gens, e.g., "ss17". Might be useful if the measurements of a certain device 
                    are consistently corrupted. Or to explore under-determined scenarios, etc.
     - add_ss13:    if `true` (default), measurements for the voltage source are added, else these are ignored
+    - aggregate_power: if `true`, total three-phase power measurements are included as such, i.e., they are not split per phase. This leads to a different DSSE provlem
 """ 
 function add_measurements!(timestep::Dates.DateTime, data::Dict, aggregation::Dates.TimePeriod; exclude::Vector{String}=String[], add_ss13::Bool=true, aggregate_power::Bool=false)::Nothing
     day = Dates.Day(timestep).value
@@ -29,7 +30,7 @@ function add_measurements!(timestep::Dates.DateTime, data::Dict, aggregation::Da
     nothing
 end
 """
-    add_balanced_measurements!(timestep::Dates.DateTime, data::Dict, aggregation::Dates.TimePeriod; exclude::Vector{String}=String[], add_ss13::Bool=true)
+    add_balanced_measurements!(timestep::Dates.DateTime, data::Dict, aggregation::Dates.TimePeriod; exclude::Vector{String}=String[])
 Similar to `add_measurements!` (see that for more info) but specifically subdivides aggregated three-phase power measurements ̲EQUALLY per phase.
 """
 function add_balanced_measurements!(timestep::Dates.DateTime, data::Dict, aggregation::Dates.TimePeriod; exclude::Vector{String}=String[])::Nothing
@@ -113,10 +114,12 @@ function aggregate_and_average_measurements(meas_df::DataFrames.DataFrame, timer
     return res_df
 end
 """
-    add_measurements_from_df!(data::Dict, ts_df::DataFrames.DataFrame)
+    add_measurements_from_df!(data::Dict, ts_df::DataFrames.DataFrame; aggregate_power::Bool=false)
 Given a single time steps's measurement dataframe `ts_df` (which can be the average/aggregation of multiple time steps),
 these measurements are added to the network dictionary `data` according to the format defined in PowerModelsDistributionStateEstimation.
 The subdivision of aggregated power measurements per phase is that defined in the paper.
+If `aggregate_power` is true, then it creates :pgt, :pdt, .... instead of :pd, :pg, which leads to the creation of an auxiliary
+variable for each total three-phase power measurement and leads to a different DSSE problem
 """
 function add_measurements_from_df!(data::Dict, ts_df::DataFrames.DataFrame; aggregate_power::Bool=false)
     data["meas"] = Dict{String, Any}()
@@ -220,8 +223,6 @@ function build_dst(meas::DataFrames.DataFrame, data::Dict, d::Dict, var::Symbol,
     else
         @error "Measurement $var not recognized for $(meas.Id[1])"
     end
-
-    #return [_DST.Normal(m1, σ[1]), _DST.Normal(m2, σ[2]), _DST.Normal(m3, σ[3])]
 end
 """
     p_subdivision(pow::Real, v1::Real, v2::Real, v3::Real, i1::Real, i2::Real, i3::Real)::Tuple{Float64, Float64, Float64}
@@ -268,7 +269,7 @@ function add_measurements_from_df_balanced!(data::Dict, ts_df::DataFrames.DataFr
     end
 end
 """
-    add_measurement_balanced!(data::Dict, ts_df::DataFrames.DataFrame)
+    add_measurement_balanced!(data::Dict, d::Dict, meas::DataFrames.DataFrame, m::Int, var::Symbol)
 Like add_measurement! but the aggregated three-phase power measurements are equally split across the three phases.
 """
 function add_measurement_balanced!(data::Dict, d::Dict, meas::DataFrames.DataFrame, m::Int, var::Symbol)
@@ -287,7 +288,7 @@ function add_measurement_balanced!(data::Dict, d::Dict, meas::DataFrames.DataFra
     end
 end
 """
-    build_dst_balanced!(data::Dict, ts_df::DataFrames.DataFrame)
+    build_dst_balanced(meas::DataFrames.DataFrame, data::Dict, d::Dict, var::Symbol, reverse::Bool)
 Like buid_dst! but the aggregated three-phase power measurements are equally split across the three phases.
 """
 function build_dst_balanced(meas::DataFrames.DataFrame, data::Dict, d::Dict, var::Symbol, reverse::Bool)
@@ -384,9 +385,12 @@ function add_ss13_2_meas!(file::String, timestep::Dates.DateTime, data::Dict, ag
                         "name" => "ss13_2"
                         )
 end
-
+"""
+    transforms the PCC supply measurements from three separate phase powers to an aggregated value :pg --> :pgt
+    This leads to the creation of auxiliary variables for the aggregated powers, and a different DSSE problem
+"""
 function aggregate_source_gen_meas!(ntw)
-    for (m,meas) in ntw["meas"]
+    for (_,meas) in ntw["meas"]
         if meas["var"] ∈ [:pg, :qg] 
             meas["var"] = Symbol(string(meas["var"])*"t")
             meas["dst"] = [_DST.Normal(sum(_DST.mean.(meas["dst"])), _DST.std(meas["dst"][1]))]
