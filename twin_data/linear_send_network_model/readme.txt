@@ -1,5 +1,8 @@
 Linear model of the SEND network voltage magnitudes in powers.
 
+- the files starting with "mv_" refer only to the medium voltage buses/connections.
+- those without this prefix refer to the whole network.
+
 The linear model is of the form:
     V = Ax + b
 where V are the voltage magnitudes (in V), x are the real and reactive 
