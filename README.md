@@ -29,7 +29,7 @@ Transformers are not explicitly displayed.
 ![alt text](./fig_archive/readme/send_ntw_background.png "Send")
 
 ## Attribution
-A full paper describing this work is in preparation and is expected to be submitted Q1 2023. In the meantime please reference this package as
+A full paper describing this work is in preparation and is expected to be submitted Q3 2023. In the meantime please reference this package as
 
 @Misc{deakin2022smart, <br />
 author = {Deakin, Matthew and Vanin, Marta and Fan, Zhong and Dean, Ashley and Dean, Matthew and Shaw, Ian and van Hertem, Dirk}, <br />
