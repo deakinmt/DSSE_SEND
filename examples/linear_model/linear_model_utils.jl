@@ -134,12 +134,12 @@ function build_b_from_se_results(vm_res, v_idx, v_base, rowidx)
     return b
 end
 """
-splits total power across the three phases.
-Only balanced option possible at the moments
+builds V⁺ as explained in the paper
 """
-function subdivide_power(P::Float64, power_partition::String)
-    if power_partition == "balanced"
-        P1, P2, P3 = P/3, P/3, P/3
+function build_Vplus(v_idx, lv_lim::Float64=1.1, mv_lim::Float64=1.06)
+    V⁺ = Array{Float64,1}(undef, length(v_idx))
+    for (i,v) in enumerate(v_idx)
+        V⁺[i] = occursin("LV", v) ? lv_lim : mv_lim
     end
-    return P1, P2, P3
+    return V⁺
 end
