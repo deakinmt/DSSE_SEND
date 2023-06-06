@@ -1,3 +1,0 @@
-new generator.solar phases=3 bus1=rmu2 kv=11 kW=4400 pf=1.0 vminpu=0.1 vmaxpu=10.0 ! NB: 5.5 MW DC, 4.4 MW AC
-new generator.wt phases=3 bus1=tx3 kv=11 kW=1100 pf=1.0 vminpu=0.1 vmaxpu=10.0 ! NB: 2.05 MW DC, 1.7 MW AC
-new generator.storage phases=3 bus1=tx5 kv=11 kW=1000 pf=1.0 vminpu=0.1 vmaxpu=10.0 ! was bess
