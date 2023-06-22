@@ -9,17 +9,20 @@ include("utils.jl")
 
 ntw  = _DS.default_network_parser(;adjust_tap_settings=true)
 
-p_load = CSV.read("state_estimation_and_load_flow_day//xmpl_load_flow_lds_W_p.csv") 
-q_load = CSV.read("state_estimation_and_load_flow_day//xmpl_load_flow_lds_VAr_q.csv") 
+p_load = CSV.read(joinpath(_DS.BASE_DIR, "twin_data/load_allocation_cases/2022_5_13/lds_W_p.csv"))
+q_load = CSV.read(joinpath(_DS.BASE_DIR, "twin_data/load_allocation_cases/2022_5_13/lds_VAr_q.csv"))
 
-p_gen = CSV.read("state_estimation_and_load_flow_day//xmpl_load_flow_gen_kW_p.csv") 
-q_gen = CSV.read("state_estimation_and_load_flow_day//xmpl_load_flow_gen_kVAr_q.csv") 
+p_gen = CSV.read(joinpath(_DS.BASE_DIR, "twin_data/load_allocation_cases/2022_5_13/gen_kW_p.csv"))
+q_gen = CSV.read(joinpath(_DS.BASE_DIR, "twin_data/load_allocation_cases/2022_5_13/gen_kVAr_q.csv")) 
 
-#volts = CSV.read("Example_load_flow_day_at_SEND//xmpl_load_flow_voltages_volts.csv")
-volts = CSV.read(raw"C:\Users\mvanin\.julia\dev\DSSE_SEND\examples\vm_pf_pmd_pf.csv")
+volts = CSV.read(joinpath(_DS.BASE_DIR, "twin_data/load_allocation_cases/2022_5_13/vm_pf.csv"))
 
-i_df_load = CSV.read("state_estimation_and_load_flow_day//xmpl_load_current_A.csv")
-i_df_gen = CSV.read("state_estimation_and_load_flow_day//xmpl_gen_current_A.csv")
+result_cols = names(volts)
+
+_DS.assign_voltage_bounds!(ntw , vmin=0.8, vmax=1.3)
+
+i_df_load = CSV.read(joinpath(_DS.BASE_DIR, "twin_data/load_allocation_cases/2022_5_13/load_current_A.csv"))
+i_df_gen = CSV.read(joinpath(_DS.BASE_DIR, "twin_data/load_allocation_cases/2022_5_13/gen_current_A.csv"))
 
 result_cols = vcat("max_err", "termination_status", "solve_time", "objective",names(volts)) 
 
@@ -67,7 +70,13 @@ for (opt, optstring) in zip([paper_cs1, paper_cs2], ["paper_cs1", "paper_cs2"])#
         push!(result_vd_df, vcat(result_line_vd...))
         push!(result_va_df, vcat(result_line_va...))
     end
-    CSV.write("vm_se_pu_$(optstring)_auto_error_$(opt["add_error"])_frompmd.csv", result_vm_df)
-    CSV.write("vd_se_pu_$(optstring)_auto_error_$(opt["add_error"])_frompmd.csv", result_vd_df)
-    CSV.write("va_se_pu_$(optstring)_auto_error_$(opt["add_error"])_frompmd.csv", result_va_df)
+    CSV.write("vm_se_pu_$(optstring)_2022_5_13.csv", result_vm_df)
+    CSV.write("vd_se_pu_$(optstring)_2022_5_13.csv", result_vd_df)
+    CSV.write("va_se_pu_$(optstring)_2022_5_13.csv", result_va_df)
 end
+
+
+################ IF YOU DON'T HAVE THE CURRENT FILES:
+
+# voltz = CSV.read(joinpath(_DS.BASE_DIR, "twin_data\\load_allocation_cases\\2022_9_17\\voltages_volts.csv"))
+# build_currents_df(voltz, p_load, q_load, p_gen, q_gen, ntw, "2022_9_17")

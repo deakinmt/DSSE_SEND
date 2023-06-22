@@ -42,8 +42,10 @@ function get_vm_df(volts::_DF.DataFrame)
     end
     return v_vm
 end
-
-function build_currents_df(volts::_DF.DataFrame, p_load, q_load, p_gen, q_gen, ntw)
+"""
+`volts` is like CSV.read(raw"DSSE_SEND\\twin_data\\load_allocation_cases\\2022_7_15\\voltages_volts.csv") 
+"""
+function build_currents_df(volts::_DF.DataFrame, p_load, q_load, p_gen, q_gen, ntw, add_str)
     cur_gen_names = ["wt_01", "wt_02", "wt_03", "storage_01", "storage_02", "storage_03","solar_01", "solar_02", "solar_03"]
     cur_df = _DF.DataFrame([name => [] for name in vcat(names(p_load), cur_gen_names)])
 
@@ -82,8 +84,8 @@ function build_currents_df(volts::_DF.DataFrame, p_load, q_load, p_gen, q_gen, n
         end
         push!(cur_df, vcat(p_load[idx, 1], load_currents..., gen_currents...))
     end
-    CSV.write("xmpl_load_current_A.csv", cur_df[:, 1:end-8])
-    CSV.write("xmpl_gen_current_A.csv", hcat(cur_df[:,1],cur_df[:, end-8:end]))
+    CSV.write(add_str*"xmpl_load_current_A.csv", cur_df[:, 1:end-8])
+    CSV.write(add_str*"xmpl_gen_current_A.csv", hcat(cur_df[:,1],cur_df[:, end-8:end]))
     return cur_df
 end
 
@@ -257,11 +259,14 @@ function add_measurements_se_day!(options::Dict, ntw::Dict, row_idx::Int, p_load
     end
 end
 
-function assign_powerflow_input!(ntw, row_idx, p_load, q_load, p_gen, q_gen)
+function assign_powerflow_input!(ntw, row_idx, p_load, q_load, p_gen, q_gen, volts)
     pds = p_load[row_idx, :] 
     qds = q_load[row_idx, :] 
     pgs = p_gen[row_idx, :] 
     qgs = q_gen[row_idx, :] 
+    ntw["bus"]["135"]["vm"] = [abs(strng2cmpx(volts[row_idx, "SOURCEBUS.1"])), 
+                               abs(strng2cmpx(volts[row_idx, "SOURCEBUS.2"])),
+                               abs(strng2cmpx(volts[row_idx, "SOURCEBUS.3"]))]
     for c in 2:3:82
         name = names(pds)[c][1:end-2]
         for (_,load) in ntw["load"] 
