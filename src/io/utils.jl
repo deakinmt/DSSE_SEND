@@ -41,6 +41,7 @@ end
     Assigns active and reactive power bounds to a `MATHEMATICAL` data dictionary,
 to all loads (except those loads that are actually generators).
 """
+# unused: delete?
 function assign_power_rating_based_bounds!(data::Dict)
     for (_, load) in data["load"]
         if load["name"] ∉ ["ss13_1", "wt", "storage", "solar"] # exclude generators
@@ -54,6 +55,7 @@ end
 """
 Retrieves loading data of substations, in kW. #TODO --> remove imaginary part altogether and get rid of `complex?`
 """
+# unused: delete?
 function get_max_ss_loads(;complex=false)
     dict = complex ?
         Dict(
