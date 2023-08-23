@@ -1,3 +1,4 @@
+! tap tap positions selected using approach as-described in the paper.
 new transformer.xfmr_3 buses=[T02 T02_lv] Conns=[Delta Wye] kVs=[11 0.415] kvas=[500 500] xhl=4.75 sub=y %noloadloss=0 mintap=0.95 maxtap=1.05 tap=0.925
 new transformer.xfmr_4 buses=[T01 T01_lv] Conns=[Delta Wye] kVs=[11 0.433] kvas=[1000 1000] xhl=5.12 sub=y %noloadloss=0 mintap=0.95 maxtap=1.05 tap=0.95
 new transformer.xfmr_5 buses=[SS03 SS03_lv] Conns=[Delta Wye] kVs=[11 0.415] kvas=[500 500] xhl=4.75 sub=y %noloadloss=0 mintap=0.95 maxtap=1.05 tap=0.925
