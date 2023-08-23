@@ -33,6 +33,7 @@ end
     add_balanced_measurements!(timestep::Dates.DateTime, data::Dict, aggregation::Dates.TimePeriod; exclude::Vector{String}=String[])
 Similar to `add_measurements!` (see that for more info) but specifically subdivides aggregated three-phase power measurements ̲EQUALLY per phase.
 """
+# not used: delete?
 function add_balanced_measurements!(timestep::Dates.DateTime, data::Dict, aggregation::Dates.TimePeriod; exclude::Vector{String}=String[])::Nothing
     day = Dates.Day(timestep).value
     month = Dates.Month(timestep).value
@@ -200,7 +201,7 @@ function build_dst(meas::DataFrames.DataFrame, data::Dict, d::Dict, var::Symbol,
         return [_DST.Normal(m1, σ[1]), _DST.Normal(m2, σ[2]), _DST.Normal(m3, σ[3])]
     elseif var ∈ [:pd, :qd, :pg, :qg]
         scale =  d["name"] ∈ ["solar", "storage", "wt", "_virtual_gen.voltage_source.source"] ? 1.0 : 1000 #except for those three, measurements are in W, not in kW (probably)
-        m1, m2, m3 = p_subdivision(meas[Symbol(String(var)[1])][1], meas.v1[1], meas.v2[1], meas.v3[1], meas.i1[1], meas.i2[1], meas.i3[1])./(data["settings"]["sbase"]*scale)
+        m1, m2, m3 = p_subdivision(meas[Symbol(String(var)[1])][1], meas.i1[1], meas.i2[1], meas.i3[1])./(data["settings"]["sbase"]*scale)
         if reverse m1, m2, m3 = -m1,-m2,-m3 end
         σ = abs.(measurement_error_model(meas, data, var, bus_id))
         if isnan(m1) m1 = 1e-7 end
@@ -225,30 +226,28 @@ function build_dst(meas::DataFrames.DataFrame, data::Dict, d::Dict, var::Symbol,
     end
 end
 """
-    p_subdivision(pow::Real, v1::Real, v2::Real, v3::Real, i1::Real, i2::Real, i3::Real)::Tuple{Float64, Float64, Float64}
+    p_subdivision(pow::Real, i1::Real, i2::Real, i3::Real)::Tuple{Float64, Float64, Float64}
 Rule to subdivide three-phase aggregated power measurements across the single phases.
-Essentially, the subdivision depends on the measured current in each phase and the voltage difference measurements. 
-v1, v2, v3, i1, i2, i3 are scalars and come from a measurement dataframe for a given (possibly aggregated) time step and a given user.
+The subdivision is weighted on the current.
+i1, i2, i3 are scalars and come from a measurement dataframe for a given (possibly aggregated) time step and a given user.
 It is not a rigorous method, check paper for a discussion.
     Arguments:
     - pow:  value of the three-phase measurement
-    - v1:   value of the voltage difference between phases 1 and 2
-    - v2:   ....
-    - v3:   ....
     - i1:   value of current measurement, phase 1
     - i2:   ....
     - i3:   ....
 """
-function p_subdivision(pow::Real, v1::Real, v2::Real, v3::Real, i1::Real, i2::Real, i3::Real)::Tuple{Float64, Float64, Float64}
-    p1 = pow*(v1*i1)/sum([v1*i1, v2*i2, v3*i3])
-    p2 = pow*(v2*i2)/sum([v1*i1, v2*i2, v3*i3])
-    p3 = pow*(v3*i3)/sum([v1*i1, v2*i2, v3*i3])
+function p_subdivision(pow::Real, i1::Real, i2::Real, i3::Real)::Tuple{Float64, Float64, Float64}
+    p1 = pow*(i1)/sum([i1, i2, i3])
+    p2 = pow*(i2)/sum([i1, i2, i3])
+    p3 = pow*(i3)/sum([i1, i2, i3])
     return p1, p2, p3
 end
 """
     add_measurements_from_df_balanced!(data::Dict, ts_df::DataFrames.DataFrame)
 Like add_measurements_from_df! but the aggregated three-phase power measurements are equally split across the three phases.
 """
+# not used: delete?
 function add_measurements_from_df_balanced!(data::Dict, ts_df::DataFrames.DataFrame)
     data["meas"] = Dict{String, Any}()
     m = 1
@@ -272,6 +271,7 @@ end
     add_measurement_balanced!(data::Dict, d::Dict, meas::DataFrames.DataFrame, m::Int, var::Symbol)
 Like add_measurement! but the aggregated three-phase power measurements are equally split across the three phases.
 """
+# not used: delete?
 function add_measurement_balanced!(data::Dict, d::Dict, meas::DataFrames.DataFrame, m::Int, var::Symbol)
     
     cmp, cmp_id = if var ∈ [:pd, :qd]
@@ -291,12 +291,13 @@ end
     build_dst_balanced(meas::DataFrames.DataFrame, data::Dict, d::Dict, var::Symbol, reverse::Bool)
 Like buid_dst! but the aggregated three-phase power measurements are equally split across the three phases.
 """
+# not used: delete?
 function build_dst_balanced(meas::DataFrames.DataFrame, data::Dict, d::Dict, var::Symbol, reverse::Bool)
     bus_id = haskey(d, "load_bus") ? d["load_bus"] : d["gen_bus"] 
     
     if var ∈ [:pd, :qd, :pg, :qg]
         scale =  d["name"] ∈ ["solar", "storage", "wt"] ? 1.0 : 1000 #except for those three, measurements are in W, not in kW (probably)
-        m1, m2, m3 = meas[Symbol(String(var)[1])][1]/3/(data["settings"]["sbase"]*scale), meas[Symbol(String(var)[1])][1]/3/(data["settings"]["sbase"]*scale), meas[Symbol(String(var)[1])][1]/3/(data["settings"]["sbase"]*scale) #p_subdivision(meas[Symbol(String(var)[1])][1], meas.v1[1], meas.v2[1], meas.v3[1], meas.i1[1], meas.i2[1], meas.i3[1])./(data["settings"]["sbase"]*scale)
+        m1, m2, m3 = meas[Symbol(String(var)[1])][1]/3/(data["settings"]["sbase"]*scale), meas[Symbol(String(var)[1])][1]/3/(data["settings"]["sbase"]*scale), meas[Symbol(String(var)[1])][1]/3/(data["settings"]["sbase"]*scale)
         if reverse m1, m2, m3 = -m1,-m2,-m3 end
         σ = measurement_error_model(meas, data, var, bus_id)
         if isnan(m1) m1 = 1e-7 end
