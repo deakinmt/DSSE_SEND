@@ -33,5 +33,5 @@ datasets for Great Britain from 2009-11-05 (4.0.0) [Data set]. Zenodo.
 DOI: https://doi.org/10.5281/zenodo.4573715
 
 vm_se_pu... files, on the other hand, are phase voltages that stem from SE 
-calculations, and are used as input of the linear model to quantity solar
+calculations, and are used as input of the linear model to quantify solar
 curtailment.
