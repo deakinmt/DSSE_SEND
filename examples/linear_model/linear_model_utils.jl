@@ -1,6 +1,7 @@
 """
 imports vectors and matrix for the linear model from the folder they are stored in.
 """
+# only used in old linear analysis: delete?
 function get_Abvvpx()
     A = Matrix(CSV.read(joinpath(_DS.BASE_DIR, "twin_data/linear_send_network_model/mdl_A.csv"), header=0))
     b = Matrix(CSV.read(joinpath(_DS.BASE_DIR, "twin_data/linear_send_network_model/mdl_b.csv"), header=0))
@@ -32,8 +33,22 @@ function build_xprime(p_idx)
     return xpp
 end
 """
+As in equaiton (6) of the paper
+"""
+function get_cpf_factor(A, vbase, p_idx)
+    pf = 0.9
+    cpf = sqrt(1-pf^2)/pf
+    Apu = A#./vbase
+    inj_idx_P = getindex.(findall(x->occursin("RMU2", x), p_idx), 1)
+    inj_idx_Q = inj_idx_P .+ length(p_idx)
+    A_p = Apu[:,inj_idx_P]*(ones(3)/3)
+    A_q = Apu[:,inj_idx_Q]*(ones(3)/3*(-cpf))
+    return (A_p + A_q) 
+end
+"""
 All this does is add a a load corresponding to ss1
 """
+# only used in old linear analysis: delete?
 function align_dsse_and_linear_model!(data::Dict)
     data["load"]["32"] = deepcopy(data["load"]["7"])
     data["load"]["32"]["load_bus"] = 108
@@ -43,6 +58,7 @@ end
 """
 simple dictionary to map substation names to matrix indices
 """
+# only used in old linear analysis: delete?
 function map_p_idx2loadid()
     return Dict(
         "T02" => "5",
@@ -82,6 +98,7 @@ end
 """
 Get vector of voltages calculated by state estimator, with their plotting indices
 """
+# only used in old linear analysis: delete?
 function get_voltages_tidy(sol::Dict, data::Dict, xticks::Vector, vm_or_vd::String)
     # dmap = map_p_idx2loadid()
     vs = []
@@ -100,6 +117,7 @@ end
 Get vector of active power calculated by state estimator, in the order indicated by p_idx
 and in W
 """
+# only used in old linear analysis: delete?
 function get_powers_tidy(sol::Dict, p_idx::Matrix{String},p_or_q::String)
     dmap = map_p_idx2loadid()
     ps = []
