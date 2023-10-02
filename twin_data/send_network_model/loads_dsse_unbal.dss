@@ -1,0 +1,107 @@
+new load.T02_a phases=1 bus1=T02_lv.1 kV=0.23094010767585 kW=166.666666667 pf=1.0 model=1 vminpu=0.1 vmaxpu=10.0
+new load.T02_b phases=1 bus1=T02_lv.2 kV=0.23094010767585 kW=166.666666667 pf=1.0 model=1 vminpu=0.1 vmaxpu=10.0
+new load.T02_c phases=1 bus1=T02_lv.3 kV=0.23094010767585 kW=166.666666667 pf=1.0 model=1 vminpu=0.1 vmaxpu=10.0
+
+new load.T01_a phases=1 bus1=T01_lv.1 kV=0.23094010767585 kW=333.3333333333 pf=1.0 model=1 vminpu=0.1 vmaxpu=10.0
+new load.T01_b phases=1 bus1=T01_lv.2 kV=0.23094010767585 kW=333.3333333333 pf=1.0 model=1 vminpu=0.1 vmaxpu=10.0
+new load.T01_c phases=1 bus1=T01_lv.3 kV=0.23094010767585 kW=333.3333333333 pf=1.0 model=1 vminpu=0.1 vmaxpu=10.0
+
+new load.SS03_a phases=1 bus1=SS03_lv.1 kV=0.23094010767585 kW=166.666666667 pf=1.0 model=1 vminpu=0.1 vmaxpu=10.0
+new load.SS03_b phases=1 bus1=SS03_lv.2 kV=0.23094010767585 kW=166.666666667 pf=1.0 model=1 vminpu=0.1 vmaxpu=10.0
+new load.SS03_c phases=1 bus1=SS03_lv.3 kV=0.23094010767585 kW=166.666666667 pf=1.0 model=1 vminpu=0.1 vmaxpu=10.0
+
+new load.SS04_a phases=1 bus1=SS04_lv.1 kV=0.23094010767585 kW=166.666666667 pf=1.0 model=1 vminpu=0.1 vmaxpu=10.0
+new load.SS04_b phases=1 bus1=SS04_lv.2 kV=0.23094010767585 kW=166.666666667 pf=1.0 model=1 vminpu=0.1 vmaxpu=10.0
+new load.SS04_c phases=1 bus1=SS04_lv.3 kV=0.23094010767585 kW=166.666666667 pf=1.0 model=1 vminpu=0.1 vmaxpu=10.0
+
+new load.SS05_a phases=1 bus1=SS05_lv.1 kV=0.23094010767585 kW=166.666666667 pf=1.0 model=1 vminpu=0.1 vmaxpu=10.0
+new load.SS05_b phases=1 bus1=SS05_lv.2 kV=0.23094010767585 kW=166.666666667 pf=1.0 model=1 vminpu=0.1 vmaxpu=10.0
+new load.SS05_c phases=1 bus1=SS05_lv.3 kV=0.23094010767585 kW=166.666666667 pf=1.0 model=1 vminpu=0.1 vmaxpu=10.0
+
+new load.SS14_a phases=1 bus1=SS14_lv.1 kV=0.23094010767585 kW=333.3333333333 pf=1.0 model=1 vminpu=0.1 vmaxpu=10.0
+new load.SS14_b phases=1 bus1=SS14_lv.2 kV=0.23094010767585 kW=333.3333333333 pf=1.0 model=1 vminpu=0.1 vmaxpu=10.0
+new load.SS14_c phases=1 bus1=SS14_lv.3 kV=0.23094010767585 kW=333.3333333333 pf=1.0 model=1 vminpu=0.1 vmaxpu=10.0
+
+new load.SS15_a phases=1 bus1=SS15_lv.1 kV=0.23094010767585 kW=166.666666667 pf=1.0 model=1 vminpu=0.1 vmaxpu=10.0
+new load.SS15_b phases=1 bus1=SS15_lv.2 kV=0.23094010767585 kW=166.666666667 pf=1.0 model=1 vminpu=0.1 vmaxpu=10.0
+new load.SS15_c phases=1 bus1=SS15_lv.3 kV=0.23094010767585 kW=166.666666667 pf=1.0 model=1 vminpu=0.1 vmaxpu=10.0
+
+new load.SS16_a phases=1 bus1=SS16_lv.1 kV=0.23094010767585 kW=166.666666667 pf=1.0 model=1 vminpu=0.1 vmaxpu=10.0
+new load.SS16_b phases=1 bus1=SS16_lv.2 kV=0.23094010767585 kW=166.666666667 pf=1.0 model=1 vminpu=0.1 vmaxpu=10.0
+new load.SS16_c phases=1 bus1=SS16_lv.3 kV=0.23094010767585 kW=166.666666667 pf=1.0 model=1 vminpu=0.1 vmaxpu=10.0
+
+new load.SS18_a phases=1 bus1=SS18_lv.1 kV=0.23094010767585 kW=166.666666667 pf=1.0 model=1 vminpu=0.1 vmaxpu=10.0
+new load.SS18_b phases=1 bus1=SS18_lv.2 kV=0.23094010767585 kW=166.666666667 pf=1.0 model=1 vminpu=0.1 vmaxpu=10.0
+new load.SS18_c phases=1 bus1=SS18_lv.3 kV=0.23094010767585 kW=166.666666667 pf=1.0 model=1 vminpu=0.1 vmaxpu=10.0
+
+new load.SS19_a phases=1 bus1=SS19_lv.1 kV=0.23094010767585 kW=166.666666667 pf=1.0 model=1 vminpu=0.1 vmaxpu=10.0
+new load.SS19_b phases=1 bus1=SS19_lv.2 kV=0.23094010767585 kW=166.666666667 pf=1.0 model=1 vminpu=0.1 vmaxpu=10.0
+new load.SS19_c phases=1 bus1=SS19_lv.3 kV=0.23094010767585 kW=166.666666667 pf=1.0 model=1 vminpu=0.1 vmaxpu=10.0
+
+new load.SS21_a phases=1 bus1=SS21_lv.1 kV=0.23094010767585 kW=333.3333333333 pf=1.0 model=1 vminpu=0.1 vmaxpu=10.0
+new load.SS21_b phases=1 bus1=SS21_lv.2 kV=0.23094010767585 kW=333.3333333333 pf=1.0 model=1 vminpu=0.1 vmaxpu=10.0
+new load.SS21_c phases=1 bus1=SS21_lv.3 kV=0.23094010767585 kW=333.3333333333 pf=1.0 model=1 vminpu=0.1 vmaxpu=10.0
+
+new load.SS24_a phases=1 bus1=SS24_lv.1 kV=0.23094010767585 kW=166.666666667 pf=1.0 model=1 vminpu=0.1 vmaxpu=10.0
+new load.SS24_b phases=1 bus1=SS24_lv.2 kV=0.23094010767585 kW=166.666666667 pf=1.0 model=1 vminpu=0.1 vmaxpu=10.0
+new load.SS24_c phases=1 bus1=SS24_lv.3 kV=0.23094010767585 kW=166.666666667 pf=1.0 model=1 vminpu=0.1 vmaxpu=10.0
+
+new load.SS11_a phases=1 bus1=SS11_lv.1 kV=0.23094010767585 kW=166.666666667 pf=1.0 model=1 vminpu=0.1 vmaxpu=10.0
+new load.SS11_b phases=1 bus1=SS11_lv.2 kV=0.23094010767585 kW=166.666666667 pf=1.0 model=1 vminpu=0.1 vmaxpu=10.0
+new load.SS11_c phases=1 bus1=SS11_lv.3 kV=0.23094010767585 kW=166.666666667 pf=1.0 model=1 vminpu=0.1 vmaxpu=10.0
+
+new load.SS33_a phases=1 bus1=SS33_lv.1 kV=0.23094010767585 kW=333.3333333333 pf=1.0 model=1 vminpu=0.1 vmaxpu=10.0
+new load.SS33_b phases=1 bus1=SS33_lv.2 kV=0.23094010767585 kW=333.3333333333 pf=1.0 model=1 vminpu=0.1 vmaxpu=10.0
+new load.SS33_c phases=1 bus1=SS33_lv.3 kV=0.23094010767585 kW=333.3333333333 pf=1.0 model=1 vminpu=0.1 vmaxpu=10.0
+
+new load.SS29_a phases=1 bus1=SS29_lv.1 kV=0.23094010767585 kW=333.3333333333 pf=1.0 model=1 vminpu=0.1 vmaxpu=10.0
+new load.SS29_b phases=1 bus1=SS29_lv.2 kV=0.23094010767585 kW=333.3333333333 pf=1.0 model=1 vminpu=0.1 vmaxpu=10.0
+new load.SS29_c phases=1 bus1=SS29_lv.3 kV=0.23094010767585 kW=333.3333333333 pf=1.0 model=1 vminpu=0.1 vmaxpu=10.0
+
+new load.SS27_a phases=1 bus1=SS27_lv.1 kV=0.23094010767585 kW=333.3333333333 pf=1.0 model=1 vminpu=0.1 vmaxpu=10.0
+new load.SS27_b phases=1 bus1=SS27_lv.2 kV=0.23094010767585 kW=333.3333333333 pf=1.0 model=1 vminpu=0.1 vmaxpu=10.0
+new load.SS27_c phases=1 bus1=SS27_lv.3 kV=0.23094010767585 kW=333.3333333333 pf=1.0 model=1 vminpu=0.1 vmaxpu=10.0
+
+new load.SS26_a phases=1 bus1=SS26_lv.1 kV=0.23094010767585 kW=333.3333333333 pf=1.0 model=1 vminpu=0.1 vmaxpu=10.0
+new load.SS26_b phases=1 bus1=SS26_lv.2 kV=0.23094010767585 kW=333.3333333333 pf=1.0 model=1 vminpu=0.1 vmaxpu=10.0
+new load.SS26_c phases=1 bus1=SS26_lv.3 kV=0.23094010767585 kW=333.3333333333 pf=1.0 model=1 vminpu=0.1 vmaxpu=10.0
+
+new load.SS28_a phases=1 bus1=SS28_lv.1 kV=0.23094010767585 kW=333.3333333333 pf=1.0 model=1 vminpu=0.1 vmaxpu=10.0
+new load.SS28_b phases=1 bus1=SS28_lv.2 kV=0.23094010767585 kW=333.3333333333 pf=1.0 model=1 vminpu=0.1 vmaxpu=10.0
+new load.SS28_c phases=1 bus1=SS28_lv.3 kV=0.23094010767585 kW=333.3333333333 pf=1.0 model=1 vminpu=0.1 vmaxpu=10.0
+
+new load.SS25_a phases=1 bus1=SS25_lv.1 kV=0.23094010767585 kW=333.3333333333 pf=1.0 model=1 vminpu=0.1 vmaxpu=10.0
+new load.SS25_b phases=1 bus1=SS25_lv.2 kV=0.23094010767585 kW=333.3333333333 pf=1.0 model=1 vminpu=0.1 vmaxpu=10.0
+new load.SS25_c phases=1 bus1=SS25_lv.3 kV=0.23094010767585 kW=333.3333333333 pf=1.0 model=1 vminpu=0.1 vmaxpu=10.0
+
+new load.SS06_a phases=1 bus1=SS06.1 kV=6.350852961085 kW=166.666666667 pf=1.0 model=1 vminpu=0.1 vmaxpu=10.0
+new load.SS06_b phases=1 bus1=SS06.2 kV=6.350852961085 kW=166.666666667 pf=1.0 model=1 vminpu=0.1 vmaxpu=10.0
+new load.SS06_c phases=1 bus1=SS06.3 kV=6.350852961085 kW=166.666666667 pf=1.0 model=1 vminpu=0.1 vmaxpu=10.0
+
+new load.T07_a phases=1 bus1=T07.1 kV=6.350852961085 kW=333.3333333333 pf=1.0 model=1 vminpu=0.1 vmaxpu=10.0
+new load.T07_b phases=1 bus1=T07.2 kV=6.350852961085 kW=333.3333333333 pf=1.0 model=1 vminpu=0.1 vmaxpu=10.0
+new load.T07_c phases=1 bus1=T07.3 kV=6.350852961085 kW=333.3333333333 pf=1.0 model=1 vminpu=0.1 vmaxpu=10.0
+
+new load.T08_a phases=1 bus1=T08.1 kV=6.350852961085 kW=166.666666667 pf=1.0 model=1 vminpu=0.1 vmaxpu=10.0
+new load.T08_b phases=1 bus1=T08.2 kV=6.350852961085 kW=166.666666667 pf=1.0 model=1 vminpu=0.1 vmaxpu=10.0
+new load.T08_c phases=1 bus1=T08.3 kV=6.350852961085 kW=166.666666667 pf=1.0 model=1 vminpu=0.1 vmaxpu=10.0
+
+new load.SS08_a phases=1 bus1=SS08.1 kV=6.350852961085 kW=166.666666667 pf=1.0 model=1 vminpu=0.1 vmaxpu=10.0
+new load.SS08_b phases=1 bus1=SS08.2 kV=6.350852961085 kW=166.666666667 pf=1.0 model=1 vminpu=0.1 vmaxpu=10.0
+new load.SS08_c phases=1 bus1=SS08.3 kV=6.350852961085 kW=166.666666667 pf=1.0 model=1 vminpu=0.1 vmaxpu=10.0
+
+new load.SS22_a phases=1 bus1=SS22.1 kV=6.350852961085 kW=166.666666667 pf=1.0 model=1 vminpu=0.1 vmaxpu=10.0
+new load.SS22_b phases=1 bus1=SS22.2 kV=6.350852961085 kW=166.666666667 pf=1.0 model=1 vminpu=0.1 vmaxpu=10.0
+new load.SS22_c phases=1 bus1=SS22.3 kV=6.350852961085 kW=166.666666667 pf=1.0 model=1 vminpu=0.1 vmaxpu=10.0
+
+new load.SS23_a phases=1 bus1=SS23.1 kV=6.350852961085 kW=166.666666667 pf=1.0 model=1 vminpu=0.1 vmaxpu=10.0
+new load.SS23_b phases=1 bus1=SS23.2 kV=6.350852961085 kW=166.666666667 pf=1.0 model=1 vminpu=0.1 vmaxpu=10.0
+new load.SS23_c phases=1 bus1=SS23.3 kV=6.350852961085 kW=166.666666667 pf=1.0 model=1 vminpu=0.1 vmaxpu=10.0
+
+new load.SS17_a phases=1 bus1=SS17.1 kV=6.350852961085 kW=266.666666667 pf=1.0 model=1 vminpu=0.1 vmaxpu=10.0
+new load.SS17_b phases=1 bus1=SS17.2 kV=6.350852961085 kW=266.666666667 pf=1.0 model=1 vminpu=0.1 vmaxpu=10.0
+new load.SS17_c phases=1 bus1=SS17.3 kV=6.350852961085 kW=266.666666667 pf=1.0 model=1 vminpu=0.1 vmaxpu=10.0
+
+new load.SS12_a phases=1 bus1=SS12.1 kV=6.350852961085 kW=166.666666667 pf=1.0 model=1 vminpu=0.1 vmaxpu=10.0
+new load.SS12_b phases=1 bus1=SS12.2 kV=6.350852961085 kW=166.666666667 pf=1.0 model=1 vminpu=0.1 vmaxpu=10.0
+new load.SS12_c phases=1 bus1=SS12.3 kV=6.350852961085 kW=166.666666667 pf=1.0 model=1 vminpu=0.1 vmaxpu=10.0

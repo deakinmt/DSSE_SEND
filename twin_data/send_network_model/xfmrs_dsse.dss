@@ -1,19 +1,20 @@
-new transformer.xfmr_3 buses=[T02 T02_lv] Conns=[Delta Wye] kVs=[11 0.4] kvas=[500 500] xhl=4.75 sub=y %noloadloss=0 mintap=0.95 maxtap=1.05 tap=1.025
-new transformer.xfmr_4 buses=[T01 T01_lv] Conns=[Delta Wye] kVs=[11 0.4] kvas=[1000 1000] xhl=5.12 sub=y %noloadloss=0 mintap=0.95 maxtap=1.05 tap=1.05
-new transformer.xfmr_5 buses=[SS03 SS03_lv] Conns=[Delta Wye] kVs=[11 0.4] kvas=[500 500] xhl=4.75 sub=y %noloadloss=0 mintap=0.95 maxtap=1.05 tap=1.025
-new transformer.xfmr_6 buses=[SS04 SS04_lv] Conns=[Delta Wye] kVs=[11 0.4] kvas=[500 500] xhl=4.75 sub=y %noloadloss=0 mintap=0.95 maxtap=1.05 tap=1.025
-new transformer.xfmr_7 buses=[SS05 SS05_lv] Conns=[Delta Wye] kVs=[11 0.4] kvas=[500 500] xhl=4.75 sub=y %noloadloss=0 mintap=0.95 maxtap=1.05 tap=1.025
-new transformer.xfmr_12 buses=[SS14 SS14_lv] Conns=[Delta Wye] kVs=[11 0.4] kvas=[1000 1000] xhl=5 sub=y %noloadloss=0 mintap=0.95 maxtap=1.075 tap=1.025
-new transformer.xfmr_13 buses=[SS15 SS15_lv] Conns=[Delta Wye] kVs=[11 0.4] kvas=[500 500] xhl=4.75 sub=y %noloadloss=0 mintap=0.95 maxtap=1.075 tap=1.073
-new transformer.xfmr_14 buses=[SS16 SS16_lv] Conns=[Delta Wye] kVs=[11 0.4] kvas=[500 500] xhl=4.75 sub=y %noloadloss=0 mintap=0.95 maxtap=1.075 tap=1.05
-new transformer.xfmr_15 buses=[SS18 SS18_lv] Conns=[Delta Wye] kVs=[11 0.4] kvas=[500 500] xhl=4.75 sub=y %noloadloss=0 mintap=0.95 maxtap=1.05 tap=1.05
-new transformer.xfmr_16 buses=[SS19 SS19_lv] Conns=[Delta Wye] kVs=[11 0.4] kvas=[500 500] xhl=4.75 sub=y %noloadloss=0 mintap=0.95 maxtap=1.05 tap=1.05
-new transformer.xfmr_17 buses=[SS21 SS21_lv] Conns=[Delta Wye] kVs=[11 0.4] kvas=[1000 1000] xhl=5 sub=y %noloadloss=0 mintap=0.95 maxtap=1.075 tap=1.05
-new transformer.xfmr_20 buses=[SS24 SS24_lv] Conns=[Delta Wye] kVs=[11 0.4] kvas=[500 500] xhl=4.75 sub=y %noloadloss=0 mintap=0.95 maxtap=1.075 tap=1.05
-new transformer.xfmr_22 buses=[SS11 SS11_lv] Conns=[Delta Wye] kVs=[11 0.4] kvas=[500 500] xhl=4.75 sub=y %noloadloss=0 mintap=0.95 maxtap=1.05 tap=1.025
-new transformer.xfmr_23 buses=[SS33 SS33_lv] Conns=[Delta Wye] kVs=[11 0.4] kvas=[1000 1000] xhl=5 sub=y %noloadloss=0 mintap=0.95 maxtap=1.075 tap=1.05
-new transformer.xfmr_24 buses=[SS29 SS29_lv] Conns=[Delta Wye] kVs=[11 0.4] kvas=[1000 1000] xhl=5 sub=y %noloadloss=0 mintap=0.95 maxtap=1.075 tap=1.05
-new transformer.xfmr_25 buses=[SS27 SS27_lv] Conns=[Delta Wye] kVs=[11 0.4] kvas=[1000 1000] xhl=5 sub=y %noloadloss=0
-new transformer.xfmr_26 buses=[SS26 SS26_lv] Conns=[Delta Wye] kVs=[11 0.4] kvas=[1000 1000] xhl=5 sub=y %noloadloss=0 mintap=0.95 maxtap=1.075 tap=1.05
-new transformer.xfmr_27 buses=[SS28 SS28_lv] Conns=[Delta Wye] kVs=[11 0.4] kvas=[1000 1000] xhl=5 sub=y %noloadloss=0 mintap=0.95 maxtap=1.075 tap=1.075
-new transformer.xfmr_28 buses=[SS25 SS25_lv] Conns=[Delta Wye] kVs=[11 0.4] kvas=[1000 1000] xhl=5 sub=y %noloadloss=0 mintap=0.95 maxtap=1.075 tap=1.025
+! tap tap positions selected using approach as-described in the paper.
+new transformer.xfmr_3 buses=[T02 T02_lv] Conns=[Delta Wye] kVs=[11 0.415] kvas=[500 500] xhl=4.75 sub=y %noloadloss=0 mintap=0.95 maxtap=1.05 tap=0.925
+new transformer.xfmr_4 buses=[T01 T01_lv] Conns=[Delta Wye] kVs=[11 0.433] kvas=[1000 1000] xhl=5.12 sub=y %noloadloss=0 mintap=0.95 maxtap=1.05 tap=0.95
+new transformer.xfmr_5 buses=[SS03 SS03_lv] Conns=[Delta Wye] kVs=[11 0.415] kvas=[500 500] xhl=4.75 sub=y %noloadloss=0 mintap=0.95 maxtap=1.05 tap=0.925
+new transformer.xfmr_6 buses=[SS04 SS04_lv] Conns=[Delta Wye] kVs=[11 0.415] kvas=[500 500] xhl=4.75 sub=y %noloadloss=0 mintap=0.95 maxtap=1.05 tap=0.925
+new transformer.xfmr_7 buses=[SS05 SS05_lv] Conns=[Delta Wye] kVs=[11 0.415] kvas=[500 500] xhl=4.75 sub=y %noloadloss=0 mintap=0.95 maxtap=1.05 tap=0.925
+new transformer.xfmr_12 buses=[SS14 SS14_lv] Conns=[Delta Wye] kVs=[11 0.433] kvas=[1000 1000] xhl=5 sub=y %noloadloss=0 mintap=0.95 maxtap=1.075 tap=0.9
+new transformer.xfmr_13 buses=[SS15 SS15_lv] Conns=[Delta Wye] kVs=[11 0.415] kvas=[500 500] xhl=4.75 sub=y %noloadloss=0 mintap=0.95 maxtap=1.075 tap=0.927
+new transformer.xfmr_14 buses=[SS16 SS16_lv] Conns=[Delta Wye] kVs=[11 0.415] kvas=[500 500] xhl=4.75 sub=y %noloadloss=0 mintap=0.95 maxtap=1.075 tap=0.925
+new transformer.xfmr_15 buses=[SS18 SS18_lv] Conns=[Delta Wye] kVs=[11 0.433] kvas=[500 500] xhl=4.75 sub=y %noloadloss=0 mintap=0.95 maxtap=1.05 tap=0.95
+new transformer.xfmr_16 buses=[SS19 SS19_lv] Conns=[Delta Wye] kVs=[11 0.433] kvas=[500 500] xhl=4.75 sub=y %noloadloss=0 mintap=0.95 maxtap=1.05 tap=0.95
+new transformer.xfmr_17 buses=[SS21 SS21_lv] Conns=[Delta Wye] kVs=[11 0.433] kvas=[1000 1000] xhl=5 sub=y %noloadloss=0 mintap=0.95 maxtap=1.075 tap=0.9
+new transformer.xfmr_20 buses=[SS24 SS24_lv] Conns=[Delta Wye] kVs=[11 0.415] kvas=[500 500] xhl=4.75 sub=y %noloadloss=0 mintap=0.95 maxtap=1.075 tap=0.95
+new transformer.xfmr_23 buses=[SS11 SS11_lv] Conns=[Delta Wye] kVs=[11 0.415] kvas=[500 500] xhl=4.75 sub=y %noloadloss=0 mintap=0.95 maxtap=1.05 tap=0.925
+new transformer.xfmr_24 buses=[SS33 SS33_lv] Conns=[Delta Wye] kVs=[11 0.433] kvas=[1000 1000] xhl=5 sub=y %noloadloss=0 mintap=0.95 maxtap=1.075 tap=0.95
+new transformer.xfmr_25 buses=[SS29 SS29_lv] Conns=[Delta Wye] kVs=[11 0.433] kvas=[1000 1000] xhl=5 sub=y %noloadloss=0 mintap=0.95 maxtap=1.075 tap=0.9
+new transformer.xfmr_26 buses=[SS27 SS27_lv] Conns=[Delta Wye] kVs=[11 0.433] kvas=[1000 1000] xhl=5 sub=y %noloadloss=0
+new transformer.xfmr_27 buses=[SS26 SS26_lv] Conns=[Delta Wye] kVs=[11 0.433] kvas=[1000 1000] xhl=5 sub=y %noloadloss=0 mintap=0.95 maxtap=1.075 tap=0.95
+new transformer.xfmr_28 buses=[SS28 SS28_lv] Conns=[Delta Wye] kVs=[11 0.433] kvas=[1000 1000] xhl=5 sub=y %noloadloss=0 mintap=0.95 maxtap=1.075 tap=0.925
+new transformer.xfmr_29 buses=[SS25 SS25_lv] Conns=[Delta Wye] kVs=[11 0.433] kvas=[1000 1000] xhl=5 sub=y %noloadloss=0 mintap=0.95 maxtap=1.075 tap=0.925
