@@ -9,7 +9,11 @@ The package has four components.
 - Algorithms for combining telemetry and network model using state estimation.
 - Visualization of raw telemetry and state estimation outputs.
 
-The raw source for the network model and telemetry dataset are available from M. Deakin et al, "A Smart Energy Network Digital Twin", available under a CC BY-4.0 licence (DOI: 10.25405/data.ncl.c.6315864).
+The raw source for the network model and telemetry dataset are available under a CC BY-4.0 licence:
+- ["Network Model for a Smart Energy Network Digital Twin"](https://doi.org/10.25405/data.ncl.21618273.v1), M. Deakin et al, DOI: 10.25405/data.ncl.21618342
+- ["Telemetry Data for a Smart Energy Network Digital Twin"](https://doi.org/10.25405/data.ncl.21618342.v1), M. Deakin et al, DOI: 10.25405/data.ncl.21618273
+
+A paper describing the development and use of the Digital Twin is under review, [preprint available here](https://arxiv.org/abs/2311.11997).
 
 This project is a collaboration between Newcastle University, Keele University, and KU Leuven (ESAT/Electa).
 
@@ -29,13 +33,13 @@ Transformers are not explicitly displayed.
 ![alt text](./assets/readme/send_ntw_background.png "Send")
 
 ## Attribution
-A full paper describing this work is in preparation and is expected to be submitted Q3 2023. In the meantime please reference this package as
+A paper describing the Digital Twin is presently under review, in the meantime please reference the following.
 
 @Misc{deakin2022smart, <br />
-author = {Deakin, Matthew and Vanin, Marta and Fan, Zhong and Dean, Ashley and Dean, Matthew and Shaw, Ian and van Hertem, Dirk}, <br />
-title = {A Smart Energy Network Digital Twin with Distribution System State Estimation}, <br />
-howpublished = {\url{https://github.com/MartaVanin/DSSE_SEND}}, <br />
-year = {2022} <br />
+author = {Deakin, Matthew and Vanin, Marta and Fan, Zhong and van Hertem, Dirk}, <br />
+title = {Smart Energy Network Digital Twins: Findings from a UK-Based Demonstrator Project}, <br />
+howpublished = {\url{https://arxiv.org/abs/2311.11997}}, <br />
+year = {2023} <br />
 }
 
 ## About the Smart Energy Network Demonstrator at Keele University
