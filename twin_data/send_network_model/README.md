@@ -8,3 +8,6 @@ Notes on xfmr_loading.csv:
 - column "meas" indicates whether measurements are available for this substation (yes =1, no=0)
 - rating_kva is the substation rating
 - a rough way to create pseudo-measurements/estimated on load for non-measured substations is the multiply loading and rating
+
+
+The network model is originally from M. Deakin et al ["Network Model for a Smart Energy Network Digital Twin"](https://doi.org/10.25405/data.ncl.21618342.v1), provided there under a CC BY-4.0 licence, DOI: 10.25405/data.ncl.21618342
