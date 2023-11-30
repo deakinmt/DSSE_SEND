@@ -20,7 +20,7 @@ In this directory there are various versions of these files for different
 purposes:
 - Master files:
     - master_dsse.dss 
-        - the main dss file used with the DSSE code [to check]
+        - the main dss file used with the DSSE code
     - master_dsse_lin.dss
         - same as master_dsse.dss, except splits generators and adds a load 
             bus at the source (not used)
