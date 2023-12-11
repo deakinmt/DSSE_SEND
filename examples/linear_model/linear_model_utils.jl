@@ -1,26 +1,13 @@
 """
 imports vectors and matrix for the linear model from the folder they are stored in.
 """
-# only used in old linear analysis: delete?
-function get_Abvvpx()
-    A = Matrix(CSV.read(joinpath(_DS.BASE_DIR, "twin_data/linear_send_network_model/mdl_A.csv"), header=0))
-    b = Matrix(CSV.read(joinpath(_DS.BASE_DIR, "twin_data/linear_send_network_model/mdl_b.csv"), header=0))
-    vbase = Matrix(CSV.read(joinpath(_DS.BASE_DIR, "twin_data/linear_send_network_model/vbase.csv"), header=0))
-    p_idx = Matrix(CSV.read(joinpath(_DS.BASE_DIR, "twin_data/linear_send_network_model/power_index.csv"), header=0))
-    x0 = Matrix(CSV.read(joinpath(_DS.BASE_DIR, "twin_data/linear_send_network_model/x0.csv"), header=0))
-    v_idx = Matrix(CSV.read(joinpath(_DS.BASE_DIR, "twin_data/linear_send_network_model/voltage_index.csv"), header=0))
-    return A,b,vbase,v_idx,p_idx, x0
-end
-"""
-As above but for the MV-only case.
-"""
 function get_Abvvpx_mv()
-    A = Matrix(CSV.read(joinpath(_DS.BASE_DIR, "twin_data/linear_send_network_model/mv_mdl_A.csv"), header=0))
-    b = Matrix(CSV.read(joinpath(_DS.BASE_DIR, "twin_data/linear_send_network_model/mv_mdl_b.csv"), header=0))
-    vbase = Matrix(CSV.read(joinpath(_DS.BASE_DIR, "twin_data/linear_send_network_model/mv_vbase.csv"), header=0))
-    p_idx = Matrix(CSV.read(joinpath(_DS.BASE_DIR, "twin_data/linear_send_network_model/mv_power_index.csv"), header=0))
-    x0 = Matrix(CSV.read(joinpath(_DS.BASE_DIR, "twin_data/linear_send_network_model/mv_x0.csv"), header=0))
-    v_idx = Matrix(CSV.read(joinpath(_DS.BASE_DIR, "twin_data/linear_send_network_model/mv_voltage_index.csv"), header=0))
+    A = Matrix(CSV.read(joinpath(_DS.BASE_DIR, "twin_data/linear_send_network_model/mv_mdl_A.csv"), DataFrames.DataFrame, header=0))
+    b = Matrix(CSV.read(joinpath(_DS.BASE_DIR, "twin_data/linear_send_network_model/mv_mdl_b.csv"), DataFrames.DataFrame,header=0))
+    vbase = Matrix(CSV.read(joinpath(_DS.BASE_DIR, "twin_data/linear_send_network_model/mv_vbase.csv"), DataFrames.DataFrame, header=0))
+    p_idx = Matrix(CSV.read(joinpath(_DS.BASE_DIR, "twin_data/linear_send_network_model/mv_power_index.csv"), DataFrames.DataFrame, header=0))
+    x0 = Matrix(CSV.read(joinpath(_DS.BASE_DIR, "twin_data/linear_send_network_model/mv_x0.csv"), DataFrames.DataFrame, header=0))
+    v_idx = Matrix(CSV.read(joinpath(_DS.BASE_DIR, "twin_data/linear_send_network_model/mv_voltage_index.csv"), DataFrames.DataFrame, header=0))
     return A,b,vbase,v_idx,p_idx, x0
 end
 """
@@ -33,7 +20,7 @@ function build_xprime(p_idx)
     return xpp
 end
 """
-As in equaiton (6) of the paper
+As in equation (6) of the paper
 """
 function get_cpf_factor(A, vbase, p_idx)
     pf = 0.9
@@ -44,95 +31,6 @@ function get_cpf_factor(A, vbase, p_idx)
     A_p = Apu[:,inj_idx_P]*(ones(3)/3)
     A_q = Apu[:,inj_idx_Q]*(ones(3)/3*(-cpf))
     return (A_p + A_q) 
-end
-"""
-All this does is add a a load corresponding to ss1
-"""
-# only used in old linear analysis: delete?
-function align_dsse_and_linear_model!(data::Dict)
-    data["load"]["32"] = deepcopy(data["load"]["7"])
-    data["load"]["32"]["load_bus"] = 108
-    data["load"]["32"]["name"] = "ss01"
-    data["load"]["32"]["source_id"] = "align_dsse_and_linear"
-end
-"""
-simple dictionary to map substation names to matrix indices
-"""
-# only used in old linear analysis: delete?
-function map_p_idx2loadid()
-    return Dict(
-        "T02" => "5",
-        "T01" => "27",
-        "SS04" => "26",
-        "SS03" => "11",
-        "SS05" => "16",
-        "SS14" => "19",
-        "SS15" => "20",
-        "SS16" => "7",
-        "SS18" => "17",
-        "SS19" => "13",
-        "SS21" => "10",
-        "SS24" => "12",
-        "SS11" => "21",
-        "SS33" => "24",
-        "SS29" => "14",
-        "SS27" => "15",
-        "SS26" => "9",
-        "SS28" => "25",
-        "SS25" => "2",
-        "TX3" => "31",
-        "RMU2" => "29",
-        "TX5" => "30",
-        "SS01" => "32",
-        "SS02" => "22",
-        "SS06" => "8",
-        "SS08" => "6",
-        "T07" => "18",
-        "T08" => "1",
-        "SS17" => "3",
-        "SS22" => "23",
-        "SS12" => "4",
-        "SS23" => "28"
-    )
-end
-"""
-Get vector of voltages calculated by state estimator, with their plotting indices
-"""
-# only used in old linear analysis: delete?
-function get_voltages_tidy(sol::Dict, data::Dict, xticks::Vector, vm_or_vd::String)
-    # dmap = map_p_idx2loadid()
-    vs = []
-    for x in xticks
-        for (m,meas) in data["meas"]
-            if meas["var"] ∈ [:vd, :vm]
-                if meas["name"][1] == x
-                    push!(vs, sol["solution"]["bus"]["$(meas["cmp_id"])"][vm_or_vd])
-                end
-            end
-        end
-    end
-    return vcat(vs...)
-end
-"""
-Get vector of active power calculated by state estimator, in the order indicated by p_idx
-and in W
-"""
-# only used in old linear analysis: delete?
-function get_powers_tidy(sol::Dict, p_idx::Matrix{String},p_or_q::String)
-    dmap = map_p_idx2loadid()
-    ps = []
-    for i in p_idx
-        for (k,v) in dmap
-            if occursin(k, i) 
-                if k ∈ ["RMU2", "TX5", "TX3"]
-                    push!(ps, sol["solution"]["load"]["$v"][p_or_q].*1e3)
-                else
-                    push!(ps, sol["solution"]["load"]["$v"][p_or_q].*-1e3)
-                end
-            end
-        end
-    end
-    return vcat(unique(ps)...)
 end
 """
 build the `b` vector for the linear model (for a single time step), starting from

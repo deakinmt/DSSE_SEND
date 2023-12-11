@@ -8,6 +8,7 @@ using CSV, DataFrames, StatsPlots, LaTeXStrings, Dates
 
 include("plot_function.jl") # this file contains the `plot_residuals` function used here
 
+# the csv files below could be created using SEND_DSSE as in `examples/state_estimation_and_power_flow/state_estimation_with_tap_settings_analysis.jl`
 offfile = "tap_plots/tap_analyses_aggr_2 minutes_offtaps.csv" # file with DSSE residual values with wrong tap settings in the network model
 okfile  = "tap_plots/tap_analyses_aggr_2 minutes_oktaps.csv"  # file with DSSE residual values with improved tap settings in the network model
 
