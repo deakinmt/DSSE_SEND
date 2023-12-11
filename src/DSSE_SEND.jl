@@ -6,7 +6,7 @@ import CSV, DataFrames
 import JuMP
 import PowerModelsDistributionStateEstimation as _PMDSE
 import PowerModelsDistribution as _PMD
-import PowerModelsAnalytics: plot_network
+# import PowerModelsAnalytics: plot_network
 import Statistics
 import StatsPlots
 
@@ -15,7 +15,7 @@ const BASE_DIR = dirname(@__DIR__)
 
 include("io/parse_measurements.jl")
 include("io/parse_network.jl")
-include("io/plot_network_graph.jl")
+# include("io/plot_network_graph.jl")
 include("io/utils.jl")
 include("io/viz_data.jl")
 include("io/viz_results.jl")
