@@ -4,7 +4,6 @@ import DataFrames as _DF
 import LinearAlgebra: diagm
 import Random as _RAN
 import Distributions as _DST
-import StatsPlots as _SP
 
 """
 Transforms string to complex number
@@ -191,7 +190,7 @@ function add_measurements_se_day!(options::Dict, ntw::Dict, row_idx::Int, p_load
                     μ = [vs[c], vs[c+1], vs[c+2]] #this is for the case in which you read pmd-generated vm in pus
                 end
 
-                dst = options["add_error"] ? dst_with_error(μ, i_df_load[row_idx,:], c, ntw, v_sym, bus["index"]) : dst_without_error(μ, .01)
+                dst = options["add_error"] ? dst_with_error(μ, i_df_load[row_idx,:], c, ntw, v_sym, bus["index"]) : dst_without_error(μ, .005)
                 
                 ntw["meas"]["$m_idx"] = Dict("var"=>v_sym, "cmp"=>:bus, "cmp_id"=>bus["index"], "dst"=>dst, "name"=>name, "crit"=>"rwlav")
             end
