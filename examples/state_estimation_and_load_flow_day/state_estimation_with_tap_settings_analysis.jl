@@ -30,7 +30,7 @@ time_step_step = Dates.Minute(2)
 aggregation = time_step_step
 
 exclude = ["ss02", "ss17"]
-_DS.add_measurements!(time_step_begin, data_ok , aggregation, exclude = exclude, add_ss13=true) # this is just to initialize the result dataframe
+_DS.add_measurements!(time_step_begin, data_ok , aggregation, exclude = exclude, add_ss13=true, aggregate_power = false) # this is just to initialize the result dataframe
 meas_names = [meas["name"] isa Vector ? meas["name"][1] : meas["name"] for (_,meas) in data_ok["meas"]]
 
 cols = vcat("timestep", "termination_status", "objective", 
@@ -41,8 +41,8 @@ residual_df_off = DataFrames.DataFrame([name => [] for name in cols])
 
 for ts in time_step_begin:time_step_step:time_step_end
 
-    _DS.add_measurements!(ts, data_ok , aggregation, exclude = exclude, add_ss13=true) 
-    _DS.add_measurements!(ts, data_off, aggregation, exclude = exclude, add_ss13=true) 
+    _DS.add_measurements!(ts, data_ok , aggregation, exclude = exclude, add_ss13=true, aggregate_power = false) 
+    _DS.add_measurements!(ts, data_off, aggregation, exclude = exclude, add_ss13=true, aggregate_power = false) 
     
     se_sol_ok  = _DS.solve_acr_mc_se(data_ok , Ipopt.Optimizer)
     se_sol_off = _DS.solve_acr_mc_se(data_off, Ipopt.Optimizer)
@@ -68,5 +68,7 @@ for ts in time_step_begin:time_step_step:time_step_end
 
 end
 
-CSV.write("tap_analyses_aggr_$(aggregation)_oktaps.csv", residual_df_ok)
-CSV.write("tap_analyses_aggr_$(aggregation)_offtaps.csv", residual_df_off)
+p = plot_residuals_single_ts(residual_df_ok, residual_df_ok.timestep[2])
+
+# CSV.write("tap_analyses_aggr_$(aggregation)_oktaps_with_aggreg_power.csv", residual_df_ok)
+# CSV.write("tap_analyses_aggr_$(aggregation)_offtaps_with_aggreg_power.csv", residual_df_off)
