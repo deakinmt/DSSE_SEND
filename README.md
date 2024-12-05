@@ -37,13 +37,16 @@ Transformers are not explicitly displayed.
 ![alt text](./assets/readme/send_ntw_background.png "Send")
 
 ## Attribution
-A paper describing the Digital Twin is presently under review, in the meantime please reference the following.
+The [paper](https://www.sciencedirect.com/science/article/pii/S0142061524005258) describing the Digital Twin is:
 
-@Misc{deakin2022smart, <br />
-author = {Deakin, Matthew and Vanin, Marta and Fan, Zhong and van Hertem, Dirk}, <br />
-title = {Smart Energy Network Digital Twins: Findings from a UK-Based Demonstrator Project}, <br />
-howpublished = {\url{https://arxiv.org/abs/2311.11997}}, <br />
-year = {2023} <br />
+@article{deakin2024smart,\
+title={Smart energy network digital twins: Findings from a UK-based demonstrator project},\
+author={Deakin, Matthew and Vanin, Marta and Fan, Zhong and Van Hertem, Dirk},\
+journal={International Journal Of Electrical Power \& Energy Systems},\
+volume={162},\
+pages={110302},\
+year={2024},\
+publisher={Elsevier}\
 }
 
 ## About the Smart Energy Network Demonstrator at Keele University
